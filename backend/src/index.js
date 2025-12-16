@@ -13,7 +13,46 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ... (middlewares)
+// Middlewares
+// Configure CORS to allow frontend domain
+app.use(cors({
+  origin: [
+    'https://crypto-crypto-frontend.2msrpd.easypanel.host',
+    'http://localhost:5173', // Para desenvolvimento local
+    'http://localhost:3000'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(express.json());
+
+// Additional CORS headers for preflight requests
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  next();
+});
+
+// Log de requisições em desenvolvimento
+if (process.env.NODE_ENV === 'development') {
+  app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+    next();
+  });
+}
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 // API Routes
 app.get('/api/health', (req, res) => {
