@@ -52,22 +52,32 @@ function getProvider(chainId, rpcIndex = 0) {
   // Tenta usar API keys se disponível, senão usa RPC público
   let rpcUrl = chain.rpcUrl;
 
-  if (chainId === 'ethereum' && process.env.ALCHEMY_API_KEY) {
-    rpcUrl = `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
-  } else if (chainId === 'ethereum' && process.env.INFURA_API_KEY) {
-    rpcUrl = `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`;
-  } else if (chainId === 'arbitrum' && process.env.ALCHEMY_API_KEY) {
-    rpcUrl = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
-  } else if (chainId === 'polygon' && process.env.ALCHEMY_API_KEY) {
-    rpcUrl = `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
-  } else if (chainId === 'bnb' && process.env.ALCHEMY_API_KEY) {
-    rpcUrl = `https://bnb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
-  } else if (chainId === 'bnb' && chain.rpcUrls && rpcIndex < chain.rpcUrls.length) {
-    // Para BNB Chain, usa RPC alternativo se disponível
-    rpcUrl = chain.rpcUrls[rpcIndex];
-  }
+  try {
+    if (chainId === 'ethereum' && process.env.ALCHEMY_API_KEY) {
+      rpcUrl = `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+    } else if (chainId === 'ethereum' && process.env.INFURA_API_KEY) {
+      rpcUrl = `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`;
+    } else if (chainId === 'arbitrum' && process.env.ALCHEMY_API_KEY) {
+      rpcUrl = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+    } else if (chainId === 'polygon' && process.env.ALCHEMY_API_KEY) {
+      rpcUrl = `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+    } else if (chainId === 'bnb' && process.env.ALCHEMY_API_KEY) {
+      rpcUrl = `https://bnb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+    } else if (chainId === 'bnb' && chain.rpcUrls && rpcIndex < chain.rpcUrls.length) {
+      // Para BNB Chain, usa RPC alternativo se disponível
+      rpcUrl = chain.rpcUrls[rpcIndex];
+    }
 
-  return new ethers.JsonRpcProvider(rpcUrl);
+    // Cria provider com configuração mais permissiva
+    return new ethers.JsonRpcProvider(rpcUrl, undefined, {
+      staticNetwork: true, // Evita detecção automática de rede
+      batchMaxCount: 1 // Desabilita batching
+    });
+  } catch (error) {
+    console.error(`Error creating provider for ${chainId}:`, error.message);
+    // Retorna provider básico como fallback
+    return new ethers.JsonRpcProvider(rpcUrl);
+  }
 }
 
 /**
