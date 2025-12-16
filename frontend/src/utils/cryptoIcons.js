@@ -1,0 +1,83 @@
+/**
+ * Crypto icon utility - uses CoinGecko API for real crypto logos
+ * Provides fallback SVG icons for unknown tokens
+ */
+
+// CoinGecko API base URL for crypto icons
+const COINGECKO_CDN = 'https://assets.coingecko.com/coins/images';
+
+// Mapping of common crypto symbols to CoinGecko IDs
+const CRYPTO_ID_MAP = {
+  'BTC': { id: 1, name: 'Bitcoin' },
+  'ETH': { id: 279, name: 'Ethereum' },
+  'BNB': { id: 825, name: 'BNB' },
+  'MATIC': { id: 4713, name: 'Polygon' },
+  'ARB': { id: 11841, name: 'Arbitrum' },
+  'USDT': { id: 325, name: 'Tether' },
+  'USDC': { id: 6319, name: 'USD Coin' },
+  'DAI': { id: 2308, name: 'Dai' },
+  'WETH': { id: 2396, name: 'Wrapped Ether' },
+  'WBTC': { id: 3717, name: 'Wrapped Bitcoin' },
+  'BTCB': { id: 14108, name: 'Binance Bitcoin' },
+  'WBNB': { id: 7192, name: 'Wrapped BNB' },
+  'LINK': { id: 1975, name: 'Chainlink' },
+  'UNI': { id: 7083, name: 'Uniswap' },
+  'AAVE': { id: 7278, name: 'Aave' },
+  'CRV': { id: 6538, name: 'Curve DAO' },
+  'MKR': { id: 1518, name: 'Maker' },
+  'SNX': { id: 2586, name: 'Synthetix' },
+  'COMP': { id: 5692, name: 'Compound' },
+  'SUSHI': { id: 6758, name: 'SushiSwap' },
+  'CAKE': { id: 7186, name: 'PancakeSwap' },
+  'XVS': { id: 7288, name: 'Venus' },
+  'BUSD': { id: 9576, name: 'Binance USD' },
+  'SHIB': { id: 11939, name: 'Shiba Inu' },
+  'STETH': { id: 13456, name: 'Lido Staked Ether' },
+  'WMATIC': { id: 8925, name: 'Wrapped Matic' },
+};
+
+/**
+ * Get crypto icon URL from CoinGecko CDN
+ */
+export function getCryptoIconUrl(symbol, size = 'large') {
+  const upperSymbol = symbol?.toUpperCase();
+  const cryptoData = CRYPTO_ID_MAP[upperSymbol];
+
+  if (cryptoData) {
+    return `${COINGECKO_CDN}/${cryptoData.id}/${size}.png`;
+  }
+
+  return null;
+}
+
+/**
+ * Get crypto name
+ */
+export function getCryptoName(symbol) {
+  const upperSymbol = symbol?.toUpperCase();
+  return CRYPTO_ID_MAP[upperSymbol]?.name || symbol;
+}
+
+/**
+ * Fallback SVG icon component for unknown tokens
+ */
+export function DefaultCryptoIcon({ className = "w-8 h-8" }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="16" fill="url(#gradient)" />
+      <path
+        d="M16 8v16M12 12l4-4 4 4M12 20l4 4 4-4"
+        stroke="white"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <defs>
+        <linearGradient id="gradient" x1="0" y1="0" x2="32" y2="32">
+          <stop offset="0%" stopColor="#3b82f6" />
+          <stop offset="100%" stopColor="#8b5cf6" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}

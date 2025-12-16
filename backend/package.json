@@ -1,0 +1,28 @@
+{
+  "name": "crypto-portfolio-backend",
+  "version": "1.0.0",
+  "description": "Backend API para portfólio de criptomoedas",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "build": "echo 'No build step required for Node.js'",
+    "migrate": "node src/database/migrate.js"
+  },
+  "keywords": ["crypto", "portfolio", "ethereum", "bitcoin"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ethers": "^6.9.0",
+    "axios": "^1.6.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "node-cache": "^5.1.2",
+    "pg": "^8.11.3",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "joi": "^17.11.0"
+  }
+}
