@@ -132,7 +132,10 @@ export async function getTopTokens(chainId, limit = 200) {
     }
 
     // Tenta buscar da API
-    let tokens = await fetchTopTokensFromAPI(chainId, limit);
+    // let tokens = await fetchTopTokensFromAPI(chainId, limit);
+
+    // Temporariamente desabilitado - usando apenas lista estática
+    let tokens = null;
 
     // Fallback para lista estática
     if (!tokens || tokens.length === 0) {
