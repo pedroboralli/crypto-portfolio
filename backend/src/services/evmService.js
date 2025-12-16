@@ -113,11 +113,8 @@ async function getNativeBalance(address, chainId) {
     const balance = await provider.getBalance(address);
     const balanceFormatted = ethers.formatEther(balance);
 
-    if (parseFloat(balanceFormatted) === 0) {
-      return null;
-    }
-
-    console.log(`✓ Found native ${chain.nativeToken.symbol} balance on ${chainId}: ${balanceFormatted}`);
+    // Always return native token (even with zero balance) so it shows on chain cards
+    console.log(`✓ Native ${chain.nativeToken.symbol} balance on ${chainId}: ${balanceFormatted}`);
 
     return {
       symbol: chain.nativeToken.symbol,
@@ -125,12 +122,34 @@ async function getNativeBalance(address, chainId) {
       balance: balanceFormatted,
       decimals: chain.nativeToken.decimals,
       coingeckoId: chain.nativeToken.coingeckoId,
-      isNative: true
+      isNative: true,
+      // Add image URL for display
+      image: getTokenImage(chain.nativeToken.symbol)
     };
   } catch (error) {
     console.error(`Error fetching native balance for ${chainId}:`, error.message);
-    return null;
+    // Return a default native token with 0 balance on error
+    const chain = CHAINS[chainId];
+    return {
+      symbol: chain.nativeToken.symbol,
+      name: chain.nativeToken.name,
+      balance: '0',
+      decimals: chain.nativeToken.decimals,
+      coingeckoId: chain.nativeToken.coingeckoId,
+      isNative: true,
+      image: getTokenImage(chain.nativeToken.symbol)
+    };
   }
+}
+
+// Helper to get token image URL
+function getTokenImage(symbol) {
+  const images = {
+    'ETH': 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
+    'MATIC': 'https://assets.coingecko.com/coins/images/4713/small/matic-token-icon.png',
+    'BNB': 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
+  };
+  return images[symbol] || null;
 }
 
 /**
