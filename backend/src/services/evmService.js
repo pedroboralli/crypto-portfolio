@@ -68,55 +68,31 @@ function getProvider(chainId, rpcIndex = 0) {
   // Tenta usar API keys se disponível, senão usa RPC público
   let rpcUrl = chain.rpcUrl;
 
-  try {
-    if (chainId === 'ethereum' && process.env.ALCHEMY_API_KEY) {
-      rpcUrl = `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
-    } else if (chainId === 'ethereum' && process.env.INFURA_API_KEY) {
-      rpcUrl = `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`;
-    } else if (chainId === 'arbitrum' && process.env.ALCHEMY_API_KEY) {
-      rpcUrl = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
-    } else if (chainId === 'polygon' && process.env.ALCHEMY_API_KEY) {
-      rpcUrl = `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
-    } else if (chainId === 'bnb' && process.env.ALCHEMY_API_KEY) {
-      rpcUrl = `https://bnb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
-    } else if (chain.rpcUrls && rpcIndex < chain.rpcUrls.length) {
-      // Usa RPC alternativo se disponível
-      rpcUrl = chain.rpcUrls[rpcIndex];
-    }
-
-    // Define network ID baseado na chain
-    const networkMap = {
-      ethereum: 1,
-      arbitrum: 42161,
-      polygon: 137,
-      bnb: 56
-    };
-
-    // Cria provider com configuração que desabilita detecção automática
-    const provider = new ethers.JsonRpcProvider(
-      rpcUrl,
-      networkMap[chainId],
-      {
-        staticNetwork: true,
-        batchMaxCount: 1,
-        polling: false // Desabilita polling automático
-      }
-    );
-
-    // Desabilita retry automático do ethers
-    provider._getConnection = () => {
-      return {
-        url: rpcUrl,
-        timeout: 10000
-      };
-    };
-
-    return provider;
-  } catch (error) {
-    console.error(`Error creating provider for ${chainId}:`, error.message);
-    // Retorna provider básico como fallback
-    return new ethers.JsonRpcProvider(rpcUrl);
+  if (chainId === 'ethereum' && process.env.ALCHEMY_API_KEY) {
+    rpcUrl = `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+  } else if (chainId === 'ethereum' && process.env.INFURA_API_KEY) {
+    rpcUrl = `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`;
+  } else if (chainId === 'arbitrum' && process.env.ALCHEMY_API_KEY) {
+    rpcUrl = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+  } else if (chainId === 'polygon' && process.env.ALCHEMY_API_KEY) {
+    rpcUrl = `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+  } else if (chainId === 'bnb' && process.env.ALCHEMY_API_KEY) {
+    rpcUrl = `https://bnb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+  } else if (chain.rpcUrls && rpcIndex < chain.rpcUrls.length) {
+    // Usa RPC alternativo se disponível
+    rpcUrl = chain.rpcUrls[rpcIndex];
   }
+
+  // Define network ID baseado na chain
+  const networkMap = {
+    ethereum: 1,
+    arbitrum: 42161,
+    polygon: 137,
+    bnb: 56
+  };
+
+  // Cria provider com network ID explícito
+  return new ethers.JsonRpcProvider(rpcUrl, networkMap[chainId]);
 }
 
 /**
