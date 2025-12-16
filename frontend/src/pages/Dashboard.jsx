@@ -292,14 +292,21 @@ function Dashboard() {
                     'BNB Chain': 'BNB',
                     'BSC': 'BNB'
                   };
-                  const nativeSymbol = nativeTokenSymbols[chain.chain] || nativeTokenSymbols[chain.name];
+                  const nativeSymbol = nativeTokenSymbols[chain.chain] || nativeTokenSymbols[chain.name] || 'ETH';
+
+                  // Debug: log chain assets to see structure
+                  console.log(`Chain ${chain.chain}/${chain.name} assets:`, chain.assets.map(a => ({ symbol: a.symbol, isNative: a.isNative, balance: a.balance })));
+
                   const nativeToken = chain.assets.find(a =>
-                    a.symbol === nativeSymbol ||
                     a.isNative === true ||
-                    (nativeSymbol === 'ETH' && (a.symbol === 'ETH' || a.symbol === 'Ether')) ||
-                    (nativeSymbol === 'MATIC' && (a.symbol === 'MATIC' || a.symbol === 'POL')) ||
-                    (nativeSymbol === 'BNB' && a.symbol === 'BNB')
+                    a.symbol === nativeSymbol ||
+                    (nativeSymbol === 'ETH' && (a.symbol === 'ETH' || a.symbol === 'Ether' || a.name === 'Ethereum')) ||
+                    (nativeSymbol === 'MATIC' && (a.symbol === 'MATIC' || a.symbol === 'POL' || a.name === 'Polygon')) ||
+                    (nativeSymbol === 'BNB' && (a.symbol === 'BNB' || a.name === 'BNB'))
                   );
+
+                  console.log(`Native token for ${chain.chain}:`, nativeToken);
+
                   const nativeBalance = nativeToken ? parseFloat(nativeToken.balance) : 0;
                   const displaySymbol = nativeToken?.symbol || nativeSymbol;
 
