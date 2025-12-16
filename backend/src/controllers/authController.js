@@ -66,7 +66,7 @@ export async function login(req, res) {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    const { email, password } = req.body;
+    const { email, password, rememberMe = false } = req.body;
 
     // Find user
     const result = await pool.query(
@@ -86,8 +86,8 @@ export async function login(req, res) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    // Generate JWT token
-    const token = generateToken({ userId: user.id, email: user.email });
+    // Generate JWT token with appropriate expiration
+    const token = generateToken({ userId: user.id, email: user.email }, rememberMe);
 
     res.json({
       token,
