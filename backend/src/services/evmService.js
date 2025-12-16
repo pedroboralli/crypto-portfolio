@@ -13,26 +13,42 @@ const ERC20_ABI = [
 const CHAINS = {
   ethereum: {
     name: 'Ethereum',
-    rpcUrl: process.env.ETHEREUM_RPC_URL || 'https://eth.public-rpc.com',
+    rpcUrl: process.env.ETHEREUM_RPC_URL || 'https://rpc.ankr.com/eth',
+    rpcUrls: [
+      'https://rpc.ankr.com/eth',
+      'https://ethereum.publicnode.com',
+      'https://eth.llamarpc.com',
+      'https://cloudflare-eth.com'
+    ],
     nativeToken: { symbol: 'ETH', name: 'Ethereum', decimals: 18, coingeckoId: 'ethereum' }
   },
   arbitrum: {
     name: 'Arbitrum',
-    rpcUrl: process.env.ARBITRUM_RPC_URL || 'https://arb1.arbitrum.io/rpc',
+    rpcUrl: process.env.ARBITRUM_RPC_URL || 'https://rpc.ankr.com/arbitrum',
+    rpcUrls: [
+      'https://rpc.ankr.com/arbitrum',
+      'https://arbitrum.llamarpc.com',
+      'https://arb1.arbitrum.io/rpc'
+    ],
     nativeToken: { symbol: 'ETH', name: 'Ethereum', decimals: 18, coingeckoId: 'ethereum' }
   },
   polygon: {
     name: 'Polygon',
-    rpcUrl: process.env.POLYGON_RPC_URL || 'https://polygon-rpc.com',
+    rpcUrl: process.env.POLYGON_RPC_URL || 'https://rpc.ankr.com/polygon',
+    rpcUrls: [
+      'https://rpc.ankr.com/polygon',
+      'https://polygon.llamarpc.com',
+      'https://polygon-rpc.com'
+    ],
     nativeToken: { symbol: 'MATIC', name: 'Polygon', decimals: 18, coingeckoId: 'matic-network' }
   },
   bnb: {
     name: 'BNB Chain',
-    rpcUrl: process.env.BNB_RPC_URL || 'https://bsc-dataseed1.binance.org',
+    rpcUrl: process.env.BNB_RPC_URL || 'https://rpc.ankr.com/bsc',
     rpcUrls: [
+      'https://rpc.ankr.com/bsc',
       'https://bsc-dataseed1.binance.org',
       'https://bsc-dataseed2.binance.org',
-      'https://bsc-dataseed3.binance.org',
       'https://bsc-dataseed.bnbchain.org',
       'https://bsc.publicnode.com'
     ],
@@ -63,8 +79,8 @@ function getProvider(chainId, rpcIndex = 0) {
       rpcUrl = `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
     } else if (chainId === 'bnb' && process.env.ALCHEMY_API_KEY) {
       rpcUrl = `https://bnb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
-    } else if (chainId === 'bnb' && chain.rpcUrls && rpcIndex < chain.rpcUrls.length) {
-      // Para BNB Chain, usa RPC alternativo se disponível
+    } else if (chain.rpcUrls && rpcIndex < chain.rpcUrls.length) {
+      // Usa RPC alternativo se disponível
       rpcUrl = chain.rpcUrls[rpcIndex];
     }
 
