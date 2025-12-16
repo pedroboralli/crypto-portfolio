@@ -84,11 +84,34 @@ function getProvider(chainId, rpcIndex = 0) {
       rpcUrl = chain.rpcUrls[rpcIndex];
     }
 
-    // Cria provider com configuração mais permissiva
-    return new ethers.JsonRpcProvider(rpcUrl, undefined, {
-      staticNetwork: true, // Evita detecção automática de rede
-      batchMaxCount: 1 // Desabilita batching
-    });
+    // Define network ID baseado na chain
+    const networkMap = {
+      ethereum: 1,
+      arbitrum: 42161,
+      polygon: 137,
+      bnb: 56
+    };
+
+    // Cria provider com configuração que desabilita detecção automática
+    const provider = new ethers.JsonRpcProvider(
+      rpcUrl,
+      networkMap[chainId],
+      {
+        staticNetwork: true,
+        batchMaxCount: 1,
+        polling: false // Desabilita polling automático
+      }
+    );
+
+    // Desabilita retry automático do ethers
+    provider._getConnection = () => {
+      return {
+        url: rpcUrl,
+        timeout: 10000
+      };
+    };
+
+    return provider;
   } catch (error) {
     console.error(`Error creating provider for ${chainId}:`, error.message);
     // Retorna provider básico como fallback
