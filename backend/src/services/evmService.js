@@ -111,6 +111,8 @@ async function getNativeBalance(address, chainId) {
       return null;
     }
 
+    console.log(`✓ Found native ${chain.nativeToken.symbol} balance on ${chainId}: ${balanceFormatted}`);
+
     return {
       symbol: chain.nativeToken.symbol,
       name: chain.nativeToken.name,
@@ -129,14 +131,15 @@ async function getNativeBalance(address, chainId) {
  * Busca o saldo de um token ERC-20 com retry
  */
 async function getTokenBalance(address, tokenAddress, chainId, retryCount = 0) {
-  const maxRetries = chainId === 'bnb' ? 2 : 0; // Mais retries para BNB Chain
+  const chain = CHAINS[chainId];
+  const maxRetries = chain.rpcUrls ? chain.rpcUrls.length - 1 : 0;
 
   try {
     const provider = getProvider(chainId, retryCount);
     const contract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
 
     // Busca informações do token em paralelo com timeout
-    const timeout = 10000; // 10 segundos
+    const timeout = 15000; // 15 segundos
     const balancePromise = Promise.race([
       Promise.all([
         contract.balanceOf(address),
@@ -171,12 +174,12 @@ async function getTokenBalance(address, tokenAddress, chainId, retryCount = 0) {
   } catch (error) {
     // Retry com outro RPC se disponível
     if (retryCount < maxRetries) {
-      console.log(`Retrying token ${tokenAddress} on ${chainId} (attempt ${retryCount + 1}/${maxRetries + 1})`);
+      console.log(`Retrying token ${tokenAddress} on ${chainId} with RPC ${retryCount + 1}/${maxRetries + 1}`);
       return getTokenBalance(address, tokenAddress, chainId, retryCount + 1);
     }
 
-    // Log apenas em desenvolvimento
-    if (process.env.NODE_ENV === 'development') {
+    // Log apenas em desenvolvimento ou para erros importantes
+    if (process.env.NODE_ENV === 'development' || error.message !== 'Timeout') {
       console.log(`Token ${tokenAddress} on ${chainId}: ${error.message}`);
     }
     return null;
