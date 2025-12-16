@@ -17,7 +17,7 @@ function Top100() {
             // Calls our backend proxy which caches CoinGecko data
             // Uses shared api instance which handles base URL automatically
             // Endpoint renamed to 'data' to bypass AdBlockers that block 'market'
-            const response = await api.get('/data/top-coins');
+            const response = await api.get('/api/data/top-coins');
             setCoins(response.data);
         } catch (err) {
             console.error('Error fetching top 100:', err);
