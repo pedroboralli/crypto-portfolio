@@ -1,49 +1,91 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import pool from './connection.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
 async function runMigrations() {
+  const client = await pool.connect();
+
   try {
     console.log('🔄 Running database migrations...');
+    console.log('📊 Database:', process.env.DB_NAME || 'crypto');
+    console.log('🔗 Host:', process.env.DB_HOST || 'localhost');
 
-    const sqlPath = path.join(__dirname, 'migrations', '001_initial_schema.sql');
-    console.log(`📄 Reading migration file: ${sqlPath}`);
+    // Create users table
+    console.log('Creating users table...');
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+    console.log('✅ Users table created');
 
-    const sql = fs.readFileSync(sqlPath, 'utf8');
-    console.log(`📝 SQL content length: ${sql.length} characters`);
+    // Create addresses table
+    console.log('Creating addresses table...');
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS addresses (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        label VARCHAR(100) NOT NULL,
+        address VARCHAR(255) NOT NULL,
+        type VARCHAR(20) NOT NULL CHECK (type IN ('evm', 'bitcoin')),
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+    console.log('✅ Addresses table created');
 
-    console.log('⚙️  Executing SQL...');
-    const result = await pool.query(sql);
-    console.log('✅ SQL executed successfully');
-    console.log('📊 Result:', result);
+    // Create user_preferences table
+    console.log('Creating user_preferences table...');
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS user_preferences (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+        default_currency VARCHAR(10) DEFAULT 'BRL',
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+    console.log('✅ User_preferences table created');
+
+    // Create indexes
+    console.log('Creating indexes...');
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_addresses_user_id ON addresses(user_id);
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_addresses_address ON addresses(address);
+    `);
+    console.log('✅ Indexes created');
 
     // Verify tables were created
-    const tablesResult = await pool.query(`
+    const tablesResult = await client.query(`
       SELECT table_name 
       FROM information_schema.tables 
       WHERE table_schema = 'public' 
       AND table_type = 'BASE TABLE'
+      ORDER BY table_name
     `);
 
-    console.log('📋 Tables created:', tablesResult.rows.map(r => r.table_name));
+    console.log('📋 Tables in database:', tablesResult.rows.map(r => r.table_name));
     console.log('✅ Database migrations completed successfully');
 
-    await pool.end();
-    process.exit(0);
   } catch (error) {
     console.error('❌ Migration failed:', error);
     console.error('Error details:', {
       message: error.message,
       code: error.code,
       detail: error.detail,
-      stack: error.stack
+      hint: error.hint,
+      position: error.position
     });
+    throw error;
+  } finally {
+    client.release();
     await pool.end();
-    process.exit(1);
   }
 }
 
-runMigrations();
+runMigrations()
+  .then(() => process.exit(0))
+  .catch(() => process.exit(1));
