@@ -2,6 +2,64 @@
 @tailwind components;
 @tailwind utilities;
 
+/* iOS Safari Optimizations */
+:root {
+  /* Safe area insets for iOS notch/home indicator */
+  --safe-area-inset-top: env(safe-area-inset-top);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+  --safe-area-inset-left: env(safe-area-inset-left);
+  --safe-area-inset-right: env(safe-area-inset-right);
+}
+
+* {
+  /* Prevent text size adjustment on iOS */
+  -webkit-text-size-adjust: 100%;
+  /* Smooth scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+}
+
+html, body {
+  /* Fix for iOS Safari viewport height */
+  height: 100%;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  
+  /* Prevent bounce scroll on iOS */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  /* Safe area padding for iOS */
+  padding-top: var(--safe-area-inset-top);
+  padding-bottom: var(--safe-area-inset-bottom);
+  padding-left: var(--safe-area-inset-left);
+  padding-right: var(--safe-area-inset-right);
+}
+
+#root {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}
+
+/* Fix for iOS input zoom */
+input, select, textarea {
+  font-size: 16px !important;
+}
+
+/* Prevent iOS tap highlight */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Smooth touch interactions */
+button, a {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+
 @layer base {
   body {
     @apply antialiased transition-colors duration-300;
