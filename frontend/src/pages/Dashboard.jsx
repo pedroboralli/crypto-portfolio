@@ -282,6 +282,18 @@ function Dashboard() {
                     'Ethereum': '🔷'
                   };
 
+                  // Find native token for each chain
+                  const nativeTokenSymbols = {
+                    'Ethereum': 'ETH',
+                    'Arbitrum One': 'ETH',
+                    'Arbitrum': 'ETH',
+                    'Polygon': 'MATIC',
+                    'BNB Chain': 'BNB'
+                  };
+                  const nativeSymbol = nativeTokenSymbols[chain.chain] || nativeTokenSymbols[chain.name];
+                  const nativeToken = chain.assets.find(a => a.symbol === nativeSymbol);
+                  const nativeBalance = nativeToken ? nativeToken.balance : 0;
+
                   return (
                     <div
                       key={chain.chainId}
@@ -298,6 +310,11 @@ function Dashboard() {
                       <div className="text-lg font-bold text-gray-900 mb-0.5 whitespace-nowrap overflow-hidden text-overflow-ellipsis">
                         {formatCurrency(chainValue, currency)}
                       </div>
+                      {nativeToken && (
+                        <div className="text-xs text-blue-600 font-medium mb-0.5">
+                          {nativeBalance.toFixed(4)} {nativeSymbol}
+                        </div>
+                      )}
                       <div className="text-xs text-gray-500">
                         ({percentage.toFixed(0)}%)
                       </div>
