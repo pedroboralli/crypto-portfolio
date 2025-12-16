@@ -81,6 +81,35 @@ function AssetList({ chains, currency = 'BRL', totalValue = 0 }) {
     return icons[chainId] || '⚪';
   };
 
+  // Get token icon URL from CoinGecko or fallback
+  const getTokenIcon = (asset) => {
+    // If asset has image property, use it directly
+    if (asset.image) return asset.image;
+
+    // Use CoinGecko icon if coingeckoId is available
+    if (asset.coingeckoId) {
+      return `https://assets.coingecko.com/coins/images/1/small/${asset.coingeckoId}.png`;
+    }
+
+    // Fallback to common token icons by symbol
+    const commonIcons = {
+      'ETH': 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
+      'MATIC': 'https://assets.coingecko.com/coins/images/4713/small/matic-token-icon.png',
+      'BNB': 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
+      'USDT': 'https://assets.coingecko.com/coins/images/325/small/Tether.png',
+      'USDC': 'https://assets.coingecko.com/coins/images/6319/small/usdc.png',
+      'DAI': 'https://assets.coingecko.com/coins/images/9956/small/Badge_Dai.png',
+      'WETH': 'https://assets.coingecko.com/coins/images/2518/small/weth.png',
+      'WBTC': 'https://assets.coingecko.com/coins/images/7598/small/wrapped_bitcoin_wbtc.png',
+      'ARB': 'https://assets.coingecko.com/coins/images/16547/small/photo_2023-03-29_21.47.00.jpeg',
+      'LINK': 'https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png',
+      'UNI': 'https://assets.coingecko.com/coins/images/12504/small/uni.jpg',
+      'AAVE': 'https://assets.coingecko.com/coins/images/12645/small/AAVE.png',
+    };
+
+    return commonIcons[asset.symbol?.toUpperCase()] || null;
+  };
+
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="overflow-x-auto">
@@ -141,6 +170,20 @@ function AssetList({ chains, currency = 'BRL', totalValue = 0 }) {
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">
                   <div className="flex items-center">
+                    {getTokenIcon(asset) ? (
+                      <img
+                        className="h-8 w-8 rounded-full mr-3"
+                        src={getTokenIcon(asset)}
+                        alt={asset.symbol}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div className="h-8 w-8 rounded-full mr-3 bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">
+                        {asset.symbol?.substring(0, 2)}
+                      </div>
+                    )}
                     <div>
                       <div className="text-sm font-medium text-gray-900">{asset.symbol}</div>
                       <div className="text-xs text-gray-500">{asset.name}</div>
