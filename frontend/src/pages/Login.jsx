@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -16,7 +17,7 @@ function Login() {
     setLoading(true);
 
     try {
-      await login(email, password);
+      await login(email, password, rememberMe);
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed');
@@ -60,6 +61,19 @@ function Login() {
                 placeholder="Password"
               />
             </div>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              id="remember-me"
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded cursor-pointer"
+            />
+            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 cursor-pointer">
+              Continuar conectado (7 dias)
+            </label>
           </div>
 
           <div>
