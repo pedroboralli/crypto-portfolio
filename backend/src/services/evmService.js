@@ -91,8 +91,15 @@ function getProvider(chainId, rpcIndex = 0) {
     bnb: 56
   };
 
-  // Cria provider com network ID explícito
-  return new ethers.JsonRpcProvider(rpcUrl, networkMap[chainId]);
+  // Cria objeto de rede explícito
+  const network = ethers.Network.from(networkMap[chainId]);
+
+  // Cria provider com staticNetwork: true para evitar detecção automática e loop de CPU
+  // Na v6: new JsonRpcProvider(url, network, options)
+  return new ethers.JsonRpcProvider(rpcUrl, network, {
+    staticNetwork: true,
+    batchMaxCount: 1 // Evita batching que pode falhar em alguns RPCs públicos
+  });
 }
 
 /**
