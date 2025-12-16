@@ -17,7 +17,7 @@ function Dashboard() {
   const [mergedPortfolio, setMergedPortfolio] = useState(null);
   const [loading, setLoading] = useState(false);
   const [currency, setCurrency] = useState('BRL');
-  const [isWalletManagerExpanded, setIsWalletManagerExpanded] = useState(false);
+  const [isWalletManagerExpanded, setIsWalletManagerExpanded] = useState(true);
   const hasAutoFetched = useRef(false);
 
   // Load user's wallets and preferences from database on mount
