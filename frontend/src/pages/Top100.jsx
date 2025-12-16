@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { formatCurrency } from '../utils/currency';
-import axios from 'axios';
+import api from '../services/api';
 
 function Top100() {
     const [coins, setCoins] = useState([]);
@@ -15,11 +15,17 @@ function Top100() {
         try {
             setLoading(true);
             // Calls our backend proxy which caches CoinGecko data
-            const response = await axios.get('http://localhost:3000/api/market/top100');
+            // Uses shared api instance which handles base URL automatically
+            const response = await api.get('/market/top100');
             setCoins(response.data);
         } catch (err) {
             console.error('Error fetching top 100:', err);
-            setError('Falha ao carregar dados do mercado. Tente novamente em instantes.');
+            // Check for specific blocking errors
+            if (err.message && (err.message.includes('Network Error') || err.message.includes('BLOCKED'))) {
+                setError('A requisição foi bloqueada. Se estiver usando um bloqueador de anúncios, tente desativá-lo ou adicionar uma exceção.');
+            } else {
+                setError('Falha ao carregar dados do mercado. Tente novamente em instantes.');
+            }
         } finally {
             setLoading(false);
         }
