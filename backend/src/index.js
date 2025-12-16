@@ -13,7 +13,17 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middlewares
-app.use(cors());
+// Configure CORS to allow frontend domain
+app.use(cors({
+  origin: [
+    'https://crypto-crypto-frontend.2msrpd.easypanel.host',
+    'http://localhost:5173', // Para desenvolvimento local
+    'http://localhost:3000'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 // Log de requisições em desenvolvimento
