@@ -288,11 +288,20 @@ function Dashboard() {
                     'Arbitrum One': 'ETH',
                     'Arbitrum': 'ETH',
                     'Polygon': 'MATIC',
-                    'BNB Chain': 'BNB'
+                    'POL': 'MATIC',
+                    'BNB Chain': 'BNB',
+                    'BSC': 'BNB'
                   };
                   const nativeSymbol = nativeTokenSymbols[chain.chain] || nativeTokenSymbols[chain.name];
-                  const nativeToken = chain.assets.find(a => a.symbol === nativeSymbol);
-                  const nativeBalance = nativeToken ? nativeToken.balance : 0;
+                  const nativeToken = chain.assets.find(a =>
+                    a.symbol === nativeSymbol ||
+                    a.isNative === true ||
+                    (nativeSymbol === 'ETH' && (a.symbol === 'ETH' || a.symbol === 'Ether')) ||
+                    (nativeSymbol === 'MATIC' && (a.symbol === 'MATIC' || a.symbol === 'POL')) ||
+                    (nativeSymbol === 'BNB' && a.symbol === 'BNB')
+                  );
+                  const nativeBalance = nativeToken ? parseFloat(nativeToken.balance) : 0;
+                  const displaySymbol = nativeToken?.symbol || nativeSymbol;
 
                   return (
                     <div
@@ -310,9 +319,9 @@ function Dashboard() {
                       <div className="text-lg font-bold text-gray-900 mb-0.5 whitespace-nowrap overflow-hidden text-overflow-ellipsis">
                         {formatCurrency(chainValue, currency)}
                       </div>
-                      {nativeToken && (
+                      {nativeToken && nativeBalance > 0 && (
                         <div className="text-xs text-blue-600 font-medium mb-0.5">
-                          {nativeBalance.toFixed(4)} {nativeSymbol}
+                          {nativeBalance.toFixed(4)} {displaySymbol}
                         </div>
                       )}
                       <div className="text-xs text-gray-500">
