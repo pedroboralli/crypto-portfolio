@@ -226,9 +226,41 @@ function Dashboard() {
             />
 
             <div>
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">Showing {mergedPortfolio.chains.reduce((acc, chain) => acc + chain.assets.length, 0)} tokens with a value of {formatCurrency(mergedPortfolio.totalValueBRL || 0, currency)}</h2>
+              {/* Chain Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                {mergedPortfolio.chains.map((chain) => {
+                  const totalValue = currency === 'BRL' ? mergedPortfolio.totalValueBRL : currency === 'USD' ? mergedPortfolio.totalValueUSD : mergedPortfolio.totalValueBTC;
+                  const chainValue = chain.assets.reduce((sum, asset) => {
+                    const assetValue = currency === 'BRL' ? asset.valueBRL : currency === 'USD' ? asset.valueUSD : asset.valueBTC;
+                    return sum + (assetValue || 0);
+                  }, 0);
+                  const percentage = totalValue > 0 ? (chainValue / totalValue) * 100 : 0;
+
+                  const chainIcons = {
+                    'Arbitrum One': '🔵',
+                    'Polygon': '🟣',
+                    'BNB Chain': '🟡',
+                    'Ethereum': '🔷'
+                  };
+
+                  return (
+                    <div key={chain.chainId} className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-2xl">{chainIcons[chain.chain] || '⚪'}</span>
+                        <span className="text-sm font-medium text-gray-700">{chain.chain} ({chain.assets.length})</span>
+                      </div>
+                      <div className="text-2xl font-bold text-gray-900 mb-1">
+                        {formatCurrency(chainValue, currency)}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        ({percentage.toFixed(0)}%)
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
+
+              {/* Assets Table */}
               <AssetList
                 chains={mergedPortfolio.chains}
                 currency={currency}
