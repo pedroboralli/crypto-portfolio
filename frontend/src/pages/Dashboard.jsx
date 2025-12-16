@@ -204,15 +204,29 @@ function Dashboard() {
 
         {isWalletManagerExpanded && (
           <div className="mb-8 fade-in">
-            <WalletManager
-              wallets={wallets}
-              onWalletsChange={handleWalletsChange}
-              onAddWallet={handleAddWalletToDb}
-              onRemoveWallet={handleRemoveWalletFromDb}
-              onUpdateLabel={handleUpdateWalletLabel}
-              onFetchAll={handleFetchAll}
-              loading={loading}
-            />
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">Gerenciar Wallets</h2>
+                <button
+                  onClick={() => setIsWalletManagerExpanded(false)}
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                  title="Minimizar"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <WalletManager
+                wallets={wallets}
+                onWalletsChange={handleWalletsChange}
+                onAddWallet={handleAddWalletToDb}
+                onRemoveWallet={handleRemoveWalletFromDb}
+                onUpdateLabel={handleUpdateWalletLabel}
+                onFetchAll={handleFetchAll}
+                loading={loading}
+              />
+            </div>
           </div>
         )}
 
