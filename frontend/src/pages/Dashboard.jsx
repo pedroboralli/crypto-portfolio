@@ -233,29 +233,9 @@ function Dashboard() {
 
         {mergedPortfolio && (
           <div className="space-y-6 fade-in">
-            {/* Portfolio Dashboard with dynamic filtered data */}
+            {/* Portfolio Dashboard always shows global total */}
             <PortfolioDashboard
-              data={selectedChain
-                ? (() => {
-                  const chain = mergedPortfolio.chains.find(c => c.deviceName === selectedChain || c.chain === selectedChain); // Fallback safe
-                  if (!chain) return mergedPortfolio;
-
-                  // Recalculate totals for the single chain
-                  const chainValueBRL = chain.assets.reduce((sum, asset) => sum + (asset.valueBRL || 0), 0);
-                  const chainValueUSD = chain.assets.reduce((sum, asset) => sum + (asset.valueUSD || 0), 0);
-                  const chainValueBTC = chain.assets.reduce((sum, asset) => sum + (asset.valueBTC || 0), 0);
-
-                  return {
-                    ...mergedPortfolio,
-                    totalValueBRL: chainValueBRL,
-                    totalValueUSD: chainValueUSD,
-                    totalValueBTC: chainValueBTC,
-                    portfolio24hChange: 0, // Individual chain 24h change not yet aggregated, defaulting to 0 or we could calc average
-                    chains: [chain] // Pass only this chain so AssetList filters too
-                  };
-                })()
-                : mergedPortfolio
-              }
+              data={mergedPortfolio}
               onRefresh={handleRefresh}
               loading={loading}
               currency={currency}
@@ -312,15 +292,7 @@ function Dashboard() {
                   : mergedPortfolio.chains
                 }
                 currency={currency}
-                totalValue={selectedChain
-                  ? (currency === 'BRL'
-                    ? mergedPortfolio.chains.find(c => c.chain === selectedChain)?.assets.reduce((s, a) => s + (a.valueBRL || 0), 0)
-                    : currency === 'USD'
-                      ? mergedPortfolio.chains.find(c => c.chain === selectedChain)?.assets.reduce((s, a) => s + (a.valueUSD || 0), 0)
-                      : mergedPortfolio.chains.find(c => c.chain === selectedChain)?.assets.reduce((s, a) => s + (a.valueBTC || 0), 0)
-                  )
-                  : (currency === 'BRL' ? mergedPortfolio.totalValueBRL : currency === 'USD' ? mergedPortfolio.totalValueUSD : mergedPortfolio.totalValueBTC)
-                }
+                totalValue={currency === 'BRL' ? mergedPortfolio.totalValueBRL : currency === 'USD' ? mergedPortfolio.totalValueUSD : mergedPortfolio.totalValueBTC}
               />
             </div>
           </div>
