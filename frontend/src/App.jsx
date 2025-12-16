@@ -6,6 +6,18 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 
+import Navbar from './components/Navbar';
+import Top100 from './pages/Top100';
+
+function Layout({ children }) {
+  return (
+    <>
+      <Navbar />
+      {children}
+    </>
+  );
+}
+
 function App() {
   return (
     <ThemeProvider>
@@ -18,7 +30,19 @@ function App() {
               path="/dashboard"
               element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <Layout>
+                    <Dashboard />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/top100"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Top100 />
+                  </Layout>
                 </ProtectedRoute>
               }
             />

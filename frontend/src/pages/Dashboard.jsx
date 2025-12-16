@@ -161,8 +161,9 @@ function Dashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <header className="mb-8">
           <div className="flex items-center justify-between mb-4">
+            <h1 className="text-2xl font-bold text-gray-900">Meu Portfólio</h1>
             <div className="flex items-center gap-4">
-              <h1 className="text-3xl font-bold text-gray-900">Multichain Portfolio</h1>
+              <CurrencySelector currency={currency} onCurrencyChange={handleCurrencyChange} />
               {!isWalletManagerExpanded && wallets.length > 0 && (
                 <WalletWidget
                   wallets={wallets}
@@ -170,18 +171,6 @@ function Dashboard() {
                   onAddWallet={() => setIsWalletManagerExpanded(true)}
                 />
               )}
-            </div>
-            <div className="flex items-center gap-4">
-              <CurrencySelector currency={currency} onCurrencyChange={handleCurrencyChange} />
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">{user?.email}</span>
-                <button
-                  onClick={logout}
-                  className="px-3 py-1.5 text-sm text-gray-700 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50"
-                >
-                  Logout
-                </button>
-              </div>
             </div>
           </div>
 
