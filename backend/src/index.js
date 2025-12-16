@@ -5,6 +5,7 @@ import portfolioRoutes from './routes/portfolioRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import pool from './database/connection.js';
+import { getGlobalTop100 } from './services/marketService.js';
 
 // Carrega variáveis de ambiente
 dotenv.config();
@@ -12,45 +13,21 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middlewares
-// Configure CORS to allow frontend domain
-app.use(cors({
-  origin: [
-    'https://crypto-crypto-frontend.2msrpd.easypanel.host',
-    'http://localhost:5173', // Para desenvolvimento local
-    'http://localhost:3000'
-  ],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-app.use(express.json());
+// ... (middlewares)
 
-// Additional CORS headers for preflight requests
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-
-  // Handle preflight
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  next();
+// API Routes
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Log de requisições em desenvolvimento
-if (process.env.NODE_ENV === 'development') {
-  app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-    next();
-  });
-}
-
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// Endpoint safe for AdBlockers (avoid 'market' or 'ads' in path)
+app.get('/api/data/top-coins', async (req, res) => {
+  try {
+    const data = await getGlobalTop100();
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch coin data' });
+  }
 });
 
 // Rotas da API
