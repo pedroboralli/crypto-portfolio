@@ -146,10 +146,49 @@ async function getNativeBalance(address, chainId) {
 function getTokenImage(symbol) {
   const images = {
     'ETH': 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
+    'WETH': 'https://assets.coingecko.com/coins/images/2518/small/weth.png',
     'MATIC': 'https://assets.coingecko.com/coins/images/4713/small/matic-token-icon.png',
+    'POL': 'https://assets.coingecko.com/coins/images/4713/small/matic-token-icon.png',
     'BNB': 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
+    'USDT': 'https://assets.coingecko.com/coins/images/325/small/Tether.png',
+    'USDC': 'https://assets.coingecko.com/coins/images/6319/small/usdc.png',
+    'DAI': 'https://assets.coingecko.com/coins/images/9956/small/Badge_Dai.png',
+    'WBTC': 'https://assets.coingecko.com/coins/images/7598/small/wrapped_bitcoin_wbtc.png',
+    'ARB': 'https://assets.coingecko.com/coins/images/16547/small/photo_2023-03-29_21.47.00.jpeg',
+    'LINK': 'https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png',
+    'UNI': 'https://assets.coingecko.com/coins/images/12504/small/uni.jpg',
+    'AAVE': 'https://assets.coingecko.com/coins/images/12645/small/AAVE.png',
+    'CRV': 'https://assets.coingecko.com/coins/images/12124/small/Curve.png',
+    'MKR': 'https://assets.coingecko.com/coins/images/1364/small/Mark_Maker.png',
+    'SNX': 'https://assets.coingecko.com/coins/images/3406/small/SNX.png',
+    'COMP': 'https://assets.coingecko.com/coins/images/10775/small/COMP.png',
+    'SUSHI': 'https://assets.coingecko.com/coins/images/12271/small/512x512_Logo_no_chop.png',
+    'LDO': 'https://assets.coingecko.com/coins/images/13573/small/Lido_DAO.png',
+    'GMX': 'https://assets.coingecko.com/coins/images/18323/small/arbit.png',
+    'PEPE': 'https://assets.coingecko.com/coins/images/29850/small/pepe-token.jpeg',
+    'SHIB': 'https://assets.coingecko.com/coins/images/11939/small/shiba.png',
   };
-  return images[symbol] || null;
+  return images[symbol?.toUpperCase()] || null;
+}
+
+// Normalize known token names that contracts return incorrectly
+function normalizeTokenName(symbol, contractName) {
+  const knownNames = {
+    'USDT': 'Tether USD',
+    'USDC': 'USD Coin',
+    'DAI': 'Dai Stablecoin',
+    'WETH': 'Wrapped Ether',
+    'WBTC': 'Wrapped Bitcoin',
+    'LINK': 'Chainlink',
+    'UNI': 'Uniswap',
+    'AAVE': 'Aave',
+    'ARB': 'Arbitrum',
+    'MATIC': 'Polygon',
+    'POL': 'Polygon',
+    'BNB': 'BNB',
+    'ETH': 'Ethereum',
+  };
+  return knownNames[symbol?.toUpperCase()] || contractName || symbol;
 }
 
 /**
@@ -190,11 +229,12 @@ async function getTokenBalance(address, tokenAddress, chainId, retryCount = 0) {
 
     return {
       symbol,
-      name,
+      name: normalizeTokenName(symbol, name),
       balance: balanceFormatted,
       decimals: Number(decimals),
       address: tokenAddress,
-      isNative: false
+      isNative: false,
+      image: getTokenImage(symbol)
     };
   } catch (error) {
     // Retry com outro RPC se disponível
