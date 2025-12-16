@@ -243,7 +243,30 @@ function Dashboard() {
 
             <div>
               {/* Chain Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+                {/* 'All' Card */}
+                <div
+                  onClick={() => setSelectedChain(null)}
+                  className={`
+                    bg-white rounded-lg shadow p-3 cursor-pointer transition-all
+                    ${!selectedChain ? 'ring-2 ring-blue-500 bg-blue-50 transform scale-[1.02]' : 'hover:shadow-md hover:scale-[1.01]'}
+                  `}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xl">🌐</span>
+                    <span className="text-xs font-medium text-gray-700">Todos</span>
+                  </div>
+                  <div className="text-lg font-bold text-gray-900 mb-0.5">
+                    {formatCurrency(
+                      currency === 'BRL' ? mergedPortfolio.totalValueBRL : currency === 'USD' ? mergedPortfolio.totalValueUSD : mergedPortfolio.totalValueBTC,
+                      currency
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    (100%)
+                  </div>
+                </div>
+
                 {mergedPortfolio.chains.map((chain) => {
                   const totalValue = currency === 'BRL' ? mergedPortfolio.totalValueBRL : currency === 'USD' ? mergedPortfolio.totalValueUSD : mergedPortfolio.totalValueBTC;
                   const chainValue = chain.assets.reduce((sum, asset) => {
@@ -266,18 +289,18 @@ function Dashboard() {
                       key={chain.chainId}
                       onClick={() => setSelectedChain(isSelected ? null : chain.chain)}
                       className={`
-                        bg-white rounded-lg shadow p-4 cursor-pointer transition-all
+                        bg-white rounded-lg shadow p-3 cursor-pointer transition-all
                         ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50 transform scale-[1.02]' : 'hover:shadow-md hover:scale-[1.01]'}
                       `}
                     >
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">{chainIcons[chain.chain] || chainIcons[chain.name] || '⚪'}</span>
-                        <span className="text-sm font-medium text-gray-700">{chain.chain} ({chain.assets.length})</span>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xl">{chainIcons[chain.chain] || chainIcons[chain.name] || '⚪'}</span>
+                        <span className="text-xs font-medium text-gray-700 truncate">{chain.chain} ({chain.assets.length})</span>
                       </div>
-                      <div className="text-2xl font-bold text-gray-900 mb-1">
+                      <div className="text-lg font-bold text-gray-900 mb-0.5 whitespace-nowrap overflow-hidden text-overflow-ellipsis">
                         {formatCurrency(chainValue, currency)}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-xs text-gray-500">
                         ({percentage.toFixed(0)}%)
                       </div>
                     </div>
