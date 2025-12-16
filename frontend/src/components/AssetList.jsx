@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { formatCurrency, formatNumber, getAssetValue, getAssetPrice } from '../utils/currency';
 
-function AssetList({ chains, currency = 'BRL' }) {
-  const [sortBy, setSortBy] = useState('value'); // 'value', 'balance', 'symbol'
-  const [sortOrder, setSortOrder] = useState('desc'); // 'asc', 'desc'
+function AssetList({ chains, currency = 'BRL', totalValue = 0 }) {
+  const [sortBy, setSortBy] = useState('value');
+  const [sortOrder, setSortOrder] = useState('desc');
 
   // Consolida todos os assets de todas as chains
   const allAssets = chains.flatMap(chain =>
@@ -14,19 +14,31 @@ function AssetList({ chains, currency = 'BRL' }) {
     }))
   );
 
+  // Calcula a porcentagem do portfolio para cada asset
+  const assetsWithPercentage = allAssets.map(asset => ({
+    ...asset,
+    portfolioPercentage: totalValue > 0 ? (getAssetValue(asset, currency) / totalValue) * 100 : 0
+  }));
+
   // Ordena assets
-  const sortedAssets = [...allAssets].sort((a, b) => {
+  const sortedAssets = [...assetsWithPercentage].sort((a, b) => {
     let compareValue;
 
     switch (sortBy) {
       case 'value':
         compareValue = getAssetValue(b, currency) - getAssetValue(a, currency);
         break;
+      case 'percentage':
+        compareValue = b.portfolioPercentage - a.portfolioPercentage;
+        break;
       case 'balance':
         compareValue = parseFloat(b.balance) - parseFloat(a.balance);
         break;
       case 'symbol':
         compareValue = a.symbol.localeCompare(b.symbol);
+        break;
+      case 'chain':
+        compareValue = a.chain.localeCompare(b.chain);
         break;
       default:
         compareValue = 0;
@@ -35,7 +47,6 @@ function AssetList({ chains, currency = 'BRL' }) {
     return sortOrder === 'asc' ? -compareValue : compareValue;
   });
 
-  // Handler para mudar ordenação
   const handleSort = (column) => {
     if (sortBy === column) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -45,143 +56,108 @@ function AssetList({ chains, currency = 'BRL' }) {
     }
   };
 
-  // Ícone de ordenação
   const SortIcon = ({ column }) => {
-    if (sortBy !== column) {
-      return (
-        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-        </svg>
-      );
-    }
+    if (sortBy !== column) return null;
 
     return sortOrder === 'asc' ? (
-      <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+      <svg className="w-3 h-3 ml-1 inline" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
       </svg>
     ) : (
-      <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      <svg className="w-3 h-3 ml-1 inline" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
       </svg>
     );
   };
 
-  // Badge de chain
-  const ChainBadge = ({ chainId, chain }) => {
-    const colors = {
-      ethereum: 'bg-blue-100 text-blue-800',
-      arbitrum: 'bg-purple-100 text-purple-800',
-      polygon: 'bg-indigo-100 text-indigo-800',
-      bitcoin: 'bg-orange-100 text-orange-800'
+  const getChainIcon = (chainId) => {
+    const icons = {
+      ethereum: '🔷',
+      arbitrum: '🔵',
+      polygon: '🟣',
+      bitcoin: '🟠',
+      bnb: '🟡'
     };
-
-    return (
-      <span className={`badge ${colors[chainId] || 'bg-gray-100 text-gray-800'}`}>
-        {chain}
-      </span>
-    );
+    return icons[chainId] || '⚪';
   };
 
   return (
-    <div className="card overflow-hidden p-0">
+    <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-dark-800">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
             <tr>
               <th
                 scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors"
+                className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                onClick={() => handleSort('chain')}
+              >
+                Chain <SortIcon column="chain" />
+              </th>
+              <th
+                scope="col"
+                className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('symbol')}
               >
-                <div className="flex items-center space-x-1">
-                  <span>Asset</span>
-                  <SortIcon column="symbol" />
-                </div>
+                Token <SortIcon column="symbol" />
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                onClick={() => handleSort('percentage')}
               >
-                Chain
+                Portfolio % <SortIcon column="percentage" />
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors"
+                className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Price
+              </th>
+              <th
+                scope="col"
+                className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('balance')}
               >
-                <div className="flex items-center justify-end space-x-1">
-                  <span>Quantidade</span>
-                  <SortIcon column="balance" />
-                </div>
+                Amount <SortIcon column="balance" />
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-              >
-                Preço ({currency})
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors"
+                className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('value')}
               >
-                <div className="flex items-center justify-end space-x-1">
-                  <span>Valor ({currency})</span>
-                  <SortIcon column="value" />
-                </div>
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-              >
-                24h
+                Value <SortIcon column="value" />
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-dark-900 divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="bg-white divide-y divide-gray-200">
             {sortedAssets.map((asset, index) => (
-              <tr key={`${asset.chain}-${asset.symbol}-${index}`} className="hover:bg-gray-50 dark:hover:bg-dark-800 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap">
+              <tr key={`${asset.chain}-${asset.symbol}-${index}`} className="hover:bg-gray-50">
+                <td className="px-4 py-3 whitespace-nowrap text-sm">
+                  <div className="flex items-center">
+                    <span className="mr-2">{getChainIcon(asset.chainId)}</span>
+                    <span className="text-gray-900">{asset.chain}</span>
+                  </div>
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap">
                   <div className="flex items-center">
                     <div>
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{asset.symbol}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{asset.name}</div>
+                      <div className="text-sm font-medium text-gray-900">{asset.symbol}</div>
+                      <div className="text-xs text-gray-500">{asset.name}</div>
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <ChainBadge chainId={asset.chainId} chain={asset.chain} />
+                <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900">
+                  {asset.portfolioPercentage.toFixed(2)}%
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-gray-100 font-mono">
-                  {formatNumber(asset.balance, asset.decimals)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-gray-100">
+                <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900">
                   {formatCurrency(getAssetPrice(asset, currency), currency)}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-semibold text-gray-900 dark:text-gray-100">
-                  {formatCurrency(getAssetValue(asset, currency), currency)}
+                <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900 font-mono">
+                  {formatNumber(asset.balance, asset.decimals)}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                  {asset.priceChange24h !== undefined && asset.priceChange24h !== 0 ? (
-                    <span
-                      className={`inline-flex items-center ${
-                        asset.priceChange24h >= 0 ? 'text-green-600' : 'text-red-600'
-                      }`}
-                    >
-                      {asset.priceChange24h >= 0 ? (
-                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                        </svg>
-                      ) : (
-                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                      {Math.abs(asset.priceChange24h).toFixed(2)}%
-                    </span>
-                  ) : (
-                    <span className="text-gray-400">-</span>
-                  )}
+                <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-semibold text-gray-900">
+                  {formatCurrency(getAssetValue(asset, currency), currency)}
                 </td>
               </tr>
             ))}
@@ -191,7 +167,7 @@ function AssetList({ chains, currency = 'BRL' }) {
 
       {sortedAssets.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-500 dark:text-gray-400">Nenhum asset encontrado</p>
+          <p className="text-gray-500">Nenhum asset encontrado</p>
         </div>
       )}
     </div>

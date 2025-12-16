@@ -3,11 +3,13 @@ import { useAuth } from '../contexts/AuthContext';
 import { getUserAddresses, addAddress as addAddressToDb, deleteAddress as deleteAddressFromDb, updateAddressLabel as updateAddressLabelInDb, getUserPreferences, updateUserPreferences } from '../services/userApi';
 import { getPortfolio } from '../services/api';
 import { mergeWalletPortfolios } from '../utils/walletMerge';
+import { formatCurrency } from '../utils/currency';
 import WalletManager from '../components/WalletManager';
 import WalletWidget from '../components/WalletWidget';
 import PortfolioDashboard from '../components/PortfolioDashboard';
-import ChainSection from '../components/ChainSection';
+import AssetList from '../components/AssetList';
 import CurrencySelector from '../components/CurrencySelector';
+import CopyButton from '../components/CopyButton';
 
 function Dashboard() {
   const { user, token, logout } = useAuth();
@@ -156,29 +158,48 @@ function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <header className="mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h1 className="text-3xl font-bold text-gray-900">Crypto Portfolio Tracker</h1>
-            {!isWalletManagerExpanded && wallets.length > 0 && (
-              <WalletWidget
-                wallets={wallets}
-                onExpand={() => setIsWalletManagerExpanded(true)}
-                onAddWallet={() => setIsWalletManagerExpanded(true)}
-              />
-            )}
-          </div>
-          <div className="flex items-center gap-4">
-            <CurrencySelector currency={currency} onCurrencyChange={handleCurrencyChange} />
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">{user?.email}</span>
-              <button
-                onClick={logout}
-                className="px-3 py-1.5 text-sm text-gray-700 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                Logout
-              </button>
+        <header className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <h1 className="text-3xl font-bold text-gray-900">Multichain Portfolio</h1>
+              {!isWalletManagerExpanded && wallets.length > 0 && (
+                <WalletWidget
+                  wallets={wallets}
+                  onExpand={() => setIsWalletManagerExpanded(true)}
+                  onAddWallet={() => setIsWalletManagerExpanded(true)}
+                />
+              )}
+            </div>
+            <div className="flex items-center gap-4">
+              <CurrencySelector currency={currency} onCurrencyChange={handleCurrencyChange} />
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">{user?.email}</span>
+                <button
+                  onClick={logout}
+                  className="px-3 py-1.5 text-sm text-gray-700 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Logout
+                </button>
+              </div>
             </div>
           </div>
+
+          {/* Wallet Addresses Display */}
+          {!isWalletManagerExpanded && wallets.length > 0 && (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-gray-500">Wallets:</span>
+              <div className="flex flex-wrap gap-2">
+                {wallets.map((wallet) => (
+                  <div key={wallet.id} className="flex items-center gap-1 bg-gray-100 rounded-md px-2 py-1">
+                    <span className="text-gray-700 font-mono text-xs">
+                      {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
+                    </span>
+                    <CopyButton text={wallet.address} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </header>
 
         {isWalletManagerExpanded && (
@@ -204,17 +225,15 @@ function Dashboard() {
               currency={currency}
             />
 
-            <div className="card">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Assets by Chain</h2>
-              <div className="space-y-6">
-                {mergedPortfolio.chains.map((chain) => (
-                  <ChainSection
-                    key={chain.chainId}
-                    chain={chain}
-                    currency={currency}
-                  />
-                ))}
+            <div>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">Showing {mergedPortfolio.chains.reduce((acc, chain) => acc + chain.assets.length, 0)} tokens with a value of {formatCurrency(mergedPortfolio.totalValueBRL || 0, currency)}</h2>
               </div>
+              <AssetList
+                chains={mergedPortfolio.chains}
+                currency={currency}
+                totalValue={currency === 'BRL' ? mergedPortfolio.totalValueBRL : currency === 'USD' ? mergedPortfolio.totalValueUSD : mergedPortfolio.totalValueBTC}
+              />
             </div>
           </div>
         )}
