@@ -18,7 +18,7 @@ function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [currency, setCurrency] = useState('BRL');
   const [selectedChain, setSelectedChain] = useState(null);
-  const [isWalletManagerExpanded, setIsWalletManagerExpanded] = useState(true);
+  const [isWalletManagerExpanded, setIsWalletManagerExpanded] = useState(false);
   const hasAutoFetched = useRef(false);
 
   // Load user's wallets and preferences from database on mount
@@ -164,7 +164,7 @@ function Dashboard() {
             <h1 className="text-2xl font-bold text-gray-900">Meu Portfólio</h1>
             <div className="flex items-center gap-4">
               <CurrencySelector currency={currency} onCurrencyChange={handleCurrencyChange} />
-              {!isWalletManagerExpanded && wallets.length > 0 && (
+              {!isWalletManagerExpanded && (
                 <WalletWidget
                   wallets={wallets}
                   onExpand={() => setIsWalletManagerExpanded(true)}
