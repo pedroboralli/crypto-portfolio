@@ -5,7 +5,7 @@ import supabase from '../../lib/db.js';
 export default async function handler(req, res) {
   let decoded;
   try {
-    decoded = requireAuth(req);
+    decoded = await requireAuth(req);
   } catch (err) {
     return res.status(err.status || 401).json({ error: err.error || 'Unauthorized' });
   }

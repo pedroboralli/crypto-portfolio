@@ -1,4 +1,4 @@
-import { requireAuth } from '../../lib/middleware.js';
+import { verifySupabaseToken } from '../../lib/middleware.js';
 import supabase from '../../lib/db.js';
 
 export default async function handler(req, res) {
@@ -6,9 +6,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  let decoded;
+  let authUser;
   try {
-    decoded = requireAuth(req);
+    authUser = await verifySupabaseToken(req);
   } catch (err) {
     return res.status(err.status || 401).json({ error: err.error || 'Unauthorized' });
   }
@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     const { data: user } = await supabase
       .from('users')
       .select('id, email, created_at')
-      .eq('id', decoded.userId)
+      .eq('email', authUser.email)
       .maybeSingle();
 
     if (!user) return res.status(404).json({ error: 'User not found' });
