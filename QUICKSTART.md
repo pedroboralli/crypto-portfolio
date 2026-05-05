@@ -1,98 +1,65 @@
-# Guia Rápido - Crypto Portfolio
+# Quick Start — Crypto Portfolio (Vercel + Supabase)
 
-## 🚀 Início Rápido (5 minutos)
+## Pré-requisitos
 
-### Opção 1: Docker Compose (Recomendado)
-
-```bash
-# 1. Clone o repositório
-git clone <seu-repositorio>
-cd crypto-portfolio
-
-# 2. (Opcional) Configure API keys
-cp .env.example .env
-# Edite .env e adicione suas API keys (opcional)
-
-# 3. Inicie a aplicação
-docker-compose up -d
-
-# 4. Acesse
-# Frontend: http://localhost
-# Backend: http://localhost:3001
-```
-
-### Opção 2: Desenvolvimento Local
-
-**Terminal 1 - Backend:**
-```bash
-cd backend
-npm install
-npm run dev
-```
-
-**Terminal 2 - Frontend:**
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Acesse: http://localhost:5173
-
-## 📝 Como Usar
-
-1. **Digite um endereço de wallet**:
-   - EVM: `0x...` (Ethereum, Arbitrum, Polygon)
-   - Bitcoin: `1...`, `3...` ou `bc1...`
-
-2. **Clique em "Buscar Portfólio"**
-
-3. **Visualize**:
-   - Valor total em BRL
-   - Distribuição de assets
-   - Detalhes por blockchain
-
-4. **Atualize**: Use o botão "Atualizar" para novos preços
-
-## 🧪 Testar com Endereço Público
-
-Use o endereço do Vitalik Buterin:
-```
-0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
-```
-
-## 🛑 Parar a Aplicação
-
-```bash
-docker-compose down
-```
-
-## 📚 Mais Informações
-
-Consulte o [README.md](README.md) completo para:
-- Documentação detalhada da API
-- Configurações avançadas
-- Troubleshooting
-- Customização
-
-## 🆘 Problemas Comuns
-
-**Porta já em uso:**
-```bash
-# Mude as portas no docker-compose.yml
-ports:
-  - "8080:80"  # Frontend
-  - "3002:3001"  # Backend
-```
-
-**Backend não conecta:**
-- Verifique se a porta 3001 está livre
-- Confirme que o Docker está rodando
-
-**Preços não aparecem:**
-- CoinGecko tem rate limit (50 req/min)
-- Aguarde 1 minuto entre requests
+- **Node.js** 18+
+- **Vercel CLI** (já instalado via `npm install -g vercel`)
+- **Conta Supabase** com o projeto criado
 
 ---
 
-Dúvidas? Abra uma issue no GitHub!
+## 1. Variáveis de ambiente
+
+```bash
+cp .env.example .env.local
+```
+
+Edite `.env.local` com seus valores:
+
+```env
+SUPABASE_URL=https://xxxxxxxxxxx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
+JWT_SECRET=<gere com o comando abaixo>
+```
+
+Para gerar um `JWT_SECRET` seguro:
+```bash
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
+
+---
+
+## 2. Banco de dados (Supabase)
+
+No **SQL Editor** do seu projeto Supabase, execute em ordem:
+
+1. `supabase/migrations/001_initial_schema.sql`
+2. `supabase/migrations/002_rls_policies.sql`
+
+---
+
+## 3. Rodar localmente
+
+```bash
+vercel dev
+```
+
+Acesse: **http://localhost:3000**
+
+> O `vercel dev` roda o frontend (Vite) e as API Functions juntos,
+> simulando exatamente o ambiente de produção da Vercel.
+
+---
+
+## 4. Deploy na Vercel
+
+```bash
+# Primeira vez
+vercel
+
+# Deploys subsequentes
+vercel --prod
+```
+
+Configure as mesmas variáveis de `.env.local` no painel:
+**Vercel Dashboard → Projeto → Settings → Environment Variables**
