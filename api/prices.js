@@ -1,4 +1,4 @@
-import { getPrices } from '../../lib/services/priceService.js';
+import { getPrices } from '../lib/services/priceService.js';
 
 const SYMBOL_TO_ID = {
   ETH: 'ethereum', BTC: 'bitcoin', BNB: 'binancecoin',

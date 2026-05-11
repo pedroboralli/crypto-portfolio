@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserAddresses, addAddress as addAddressToDb, deleteAddress as deleteAddressFromDb, updateAddressLabel as updateAddressLabelInDb, getUserPreferences, updateUserPreferences } from '../services/userApi';
-import { getPortfolio } from '../services/api';
+import { getPortfolio, getPortfolioMultiAddress } from '../services/api';
 import { mergeWalletPortfolios } from '../utils/walletMerge';
 import { formatCurrency } from '../utils/currency';
 import WalletManager from '../components/WalletManager';
@@ -10,6 +10,7 @@ import PortfolioDashboard from '../components/PortfolioDashboard';
 import AssetList from '../components/AssetList';
 import CurrencySelector from '../components/CurrencySelector';
 import CopyButton from '../components/CopyButton';
+import { Loader2, Globe, Minimize2, SearchX } from 'lucide-react';
 
 function Dashboard() {
   const { user, token, logout } = useAuth();
@@ -128,7 +129,9 @@ function Dashboard() {
     try {
       const fetchPromises = wallets.map(async (wallet) => {
         try {
-          const portfolioData = await getPortfolio(wallet.address);
+          const portfolioData = wallet.type === 'bitcoin'
+            ? await getPortfolioMultiAddress(null, wallet.address)
+            : await getPortfolio(wallet.address);
           return { ...wallet, portfolioData, loading: false, error: null };
         } catch (error) {
           console.error(`Error fetching portfolio for ${wallet.address}:`, error);
@@ -158,19 +161,31 @@ function Dashboard() {
 
   if (loading && !mergedPortfolio) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
-        <p className="text-gray-600 font-medium text-lg">Carregando...</p>
+      <div className="min-h-[80vh] flex flex-col justify-center items-center gap-6 fade-in">
+        <div className="relative">
+          <div className="absolute inset-0 bg-primary-500 blur-xl opacity-20 rounded-full animate-pulse-slow"></div>
+          <Loader2 className="w-16 h-16 text-primary-500 animate-spin relative z-10" />
+        </div>
+        <div className="text-center">
+          <p className="text-gray-200 font-medium text-lg">Sincronizando blockchains...</p>
+          <p className="text-gray-500 text-sm mt-1">Isso pode levar alguns segundos dependendo das redes.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <header className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-gray-900">Meu Portfólio</h1>
+    <div className="w-full relative">
+      {/* Decorative background elements */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary-600/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        <header className="mb-8 fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+              Visão Geral
+            </h1>
             <div className="flex items-center gap-4">
               <CurrencySelector currency={currency} onCurrencyChange={handleCurrencyChange} />
               {!isWalletManagerExpanded && (
@@ -185,12 +200,13 @@ function Dashboard() {
 
           {/* Wallet Addresses Display */}
           {!isWalletManagerExpanded && wallets.length > 0 && (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-gray-500">Wallets:</span>
+            <div className="flex flex-wrap items-center gap-3 text-sm">
+              <span className="text-gray-400 font-medium">Suas Carteiras:</span>
               <div className="flex flex-wrap gap-2">
                 {wallets.map((wallet) => (
-                  <div key={wallet.id} className="flex items-center gap-1 bg-gray-100 rounded-md px-2 py-1">
-                    <span className="text-gray-700 font-mono text-xs">
+                  <div key={wallet.id} className="flex items-center gap-2 bg-dark-800/60 border border-white/5 rounded-full px-3 py-1.5 backdrop-blur-sm transition-all hover:border-white/10 hover:bg-dark-700/60 shadow-sm">
+                    <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+                    <span className="text-gray-300 font-mono text-xs">
                       {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
                     </span>
                     <CopyButton text={wallet.address} />
@@ -203,17 +219,15 @@ function Dashboard() {
 
         {isWalletManagerExpanded && (
           <div className="mb-8 fade-in">
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-900">Gerenciar Wallets</h2>
+            <div className="card-elevated p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-100">Gerenciar Wallets</h2>
                 <button
                   onClick={() => setIsWalletManagerExpanded(false)}
-                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                  className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"
                   title="Minimizar"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <Minimize2 className="w-5 h-5" />
                 </button>
               </div>
               <WalletManager
@@ -241,27 +255,27 @@ function Dashboard() {
 
             <div>
               {/* Chain Summary Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
                 {/* 'All' Card */}
                 <div
                   onClick={() => setSelectedChain(null)}
                   className={`
-                    bg-white rounded-lg shadow p-3 cursor-pointer transition-all
-                    ${!selectedChain ? 'ring-2 ring-blue-500 bg-blue-50 transform scale-[1.02]' : 'hover:shadow-md hover:scale-[1.01]'}
+                    card-glass p-4 cursor-pointer hover:-translate-y-1 hover:shadow-xl transition-all duration-300 group
+                    ${!selectedChain ? 'ring-2 ring-primary-500/50 bg-primary-500/10 shadow-[0_0_15px_rgba(14,165,233,0.15)]' : 'border-transparent'}
                   `}
                 >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xl">🌐</span>
-                    <span className="text-xs font-medium text-gray-700">Todos</span>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Globe className={`w-5 h-5 ${!selectedChain ? 'text-primary-400' : 'text-gray-400 group-hover:text-gray-300'}`} />
+                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Rede Global</span>
                   </div>
-                  <div className="text-lg font-bold text-gray-900 mb-0.5">
+                  <div className="text-xl font-bold text-white mb-1">
                     {formatCurrency(
                       currency === 'BRL' ? mergedPortfolio.totalValueBRL : currency === 'USD' ? mergedPortfolio.totalValueUSD : mergedPortfolio.totalValueBTC,
                       currency
                     )}
                   </div>
-                  <div className="text-xs text-gray-500">
-                    (100%)
+                  <div className="text-xs text-primary-400 font-medium bg-primary-500/10 px-2 py-0.5 rounded-full inline-block">
+                    100% do Portfólio
                   </div>
                 </div>
 
@@ -315,24 +329,26 @@ function Dashboard() {
                       key={chain.chainId}
                       onClick={() => setSelectedChain(isSelected ? null : chain.chain)}
                       className={`
-                        bg-white rounded-lg shadow p-3 cursor-pointer transition-all
-                        ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50 transform scale-[1.02]' : 'hover:shadow-md hover:scale-[1.01]'}
+                        card-glass p-4 cursor-pointer hover:-translate-y-1 hover:shadow-xl transition-all duration-300 group
+                        ${isSelected ? 'ring-2 ring-primary-500/50 bg-primary-500/10 shadow-[0_0_15px_rgba(14,165,233,0.15)]' : 'border-transparent'}
                       `}
                     >
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xl">{chainIcons[chain.chain] || chainIcons[chain.name] || '⚪'}</span>
-                        <span className="text-xs font-medium text-gray-700 truncate">{chain.chain} ({chain.assets.length})</span>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xl filter drop-shadow-md">{chainIcons[chain.chain] || chainIcons[chain.name] || '⚪'}</span>
+                        <span className="text-xs font-semibold text-gray-300 truncate tracking-wide">{chain.chain}</span>
                       </div>
-                      <div className="text-lg font-bold text-gray-900 mb-0.5 whitespace-nowrap overflow-hidden text-overflow-ellipsis">
+                      <div className="text-xl font-bold text-white mb-1 whitespace-nowrap overflow-hidden text-overflow-ellipsis">
                         {formatCurrency(chainValue, currency)}
                       </div>
                       {nativeToken && nativeBalance > 0 && (
-                        <div className="text-xs text-blue-600 font-medium mb-0.5">
+                        <div className="text-xs text-gray-400 font-medium mb-1.5 flex items-center gap-1">
+                          <span className="w-1 h-1 rounded-full bg-gray-500"></span>
                           {nativeBalance.toFixed(4)} {displaySymbol}
                         </div>
                       )}
-                      <div className="text-xs text-gray-500">
-                        ({percentage.toFixed(0)}%)
+                      <div className="text-xs text-gray-400 font-medium bg-dark-800/50 border border-white/5 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                        {chain.assets.length} ativos
+                        <span className="text-primary-400 ml-1">({percentage.toFixed(0)}%)</span>
                       </div>
                     </div>
                   );
@@ -353,12 +369,20 @@ function Dashboard() {
         )}
 
         {!mergedPortfolio && !loading && wallets.length > 0 && (
-          <div className="text-center py-12 card">
-            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No portfolio data</h3>
-            <p className="mt-1 text-sm text-gray-500">Click "Buscar Portfólio" to fetch your wallet data</p>
+          <div className="text-center py-16 card-glass max-w-2xl mx-auto mt-12 border-dashed border-white/10">
+            <div className="w-16 h-16 bg-dark-800/80 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/5 shadow-inner">
+              <SearchX className="w-8 h-8 text-gray-500" />
+            </div>
+            <h3 className="mt-2 text-lg font-medium text-white">Nenhum dado de portfólio</h3>
+            <p className="mt-2 text-sm text-gray-400 max-w-sm mx-auto">
+              Clique em "Buscar Portfólio" para sincronizar e carregar os saldos das suas carteiras conectadas.
+            </p>
+            <button 
+              onClick={handleFetchAll}
+              className="mt-6 btn-primary mx-auto"
+            >
+              Sincronizar Agora
+            </button>
           </div>
         )}
       </div>

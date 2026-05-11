@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import WalletCard from './WalletCard';
 import { validateAddress, getAddressType } from '../utils/validation';
+import { Wallet, Plus, RefreshCw, SearchX } from 'lucide-react';
 
 function WalletManager({ wallets, onWalletsChange, onAddWallet, onRemoveWallet, onUpdateLabel, onFetchAll, loading }) {
   const [newAddress, setNewAddress] = useState('');
@@ -124,25 +125,26 @@ function WalletManager({ wallets, onWalletsChange, onAddWallet, onRemoveWallet, 
   };
 
   return (
-    <div className="card space-y-6">
+    <div className="space-y-6">
       {/* Add Wallet Section */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Gerenciar Wallets
+      <div className="card-glass p-6 border border-white/5">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-gray-100 flex items-center gap-2">
+            <Wallet className="w-5 h-5 text-primary-400" />
+            Adicionar Nova Carteira
           </h3>
           {wallets.length > 0 && (
             <span className="badge badge-primary">
-              {wallets.length} {wallets.length === 1 ? 'wallet' : 'wallets'}
+              {wallets.length} {wallets.length === 1 ? 'carteira' : 'carteiras'}
             </span>
           )}
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           {/* Label Input */}
           <div>
-            <label htmlFor="wallet-label" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Nome da Wallet (opcional)
+            <label htmlFor="wallet-label" className="block text-sm font-medium text-gray-400 mb-1.5">
+              Nome da Carteira (opcional)
             </label>
             <input
               id="wallet-label"
@@ -157,8 +159,8 @@ function WalletManager({ wallets, onWalletsChange, onAddWallet, onRemoveWallet, 
 
           {/* Address Input */}
           <div>
-            <label htmlFor="wallet-address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Endereço da Wallet
+            <label htmlFor="wallet-address" className="block text-sm font-medium text-gray-400 mb-1.5">
+              Endereço da Carteira
             </label>
             <div className="relative">
               <input
@@ -190,17 +192,17 @@ function WalletManager({ wallets, onWalletsChange, onAddWallet, onRemoveWallet, 
 
           {/* Examples */}
           <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-xs text-gray-600 dark:text-gray-400">Exemplos:</span>
+            <span className="text-xs text-gray-500">Exemplos:</span>
             {examples.map((example) => (
               <button
                 key={example.address}
                 type="button"
                 onClick={() => handleExampleClick(example.address)}
-                className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 dark:bg-dark-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-600 transition-colors"
+                className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-dark-800/80 text-gray-300 hover:bg-dark-700 hover:text-white transition-colors border border-white/5"
                 disabled={loading}
               >
                 {example.label}
-                <span className="ml-1 text-gray-500 dark:text-gray-400">({example.type})</span>
+                <span className="ml-1 text-gray-500">({example.type})</span>
               </button>
             ))}
           </div>
@@ -209,21 +211,19 @@ function WalletManager({ wallets, onWalletsChange, onAddWallet, onRemoveWallet, 
           <button
             onClick={handleAddWallet}
             disabled={loading || !newAddress}
-            className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed mt-2"
           >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            Adicionar Wallet
+            <Plus className="w-5 h-5 mr-1" />
+            Adicionar Carteira
           </button>
         </div>
       </div>
 
       {/* Wallet List Section */}
       {wallets.length > 0 && (
-        <div className="border-t border-gray-200 dark:border-dark-600 pt-6">
-          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
-            Wallets Adicionadas ({wallets.length})
+        <div className="card-glass p-6 border border-white/5">
+          <h4 className="text-sm font-semibold text-gray-200 mb-4 uppercase tracking-wider">
+            Carteiras Conectadas ({wallets.length})
           </h4>
           <div className="space-y-3">
             {wallets.map(wallet => (
@@ -242,11 +242,11 @@ function WalletManager({ wallets, onWalletsChange, onAddWallet, onRemoveWallet, 
 
       {/* Fetch Portfolio Button */}
       {wallets.length > 0 && (
-        <div className="border-t border-gray-200 dark:border-dark-600 pt-6">
+        <div className="pt-2">
           <button
             onClick={onFetchAll}
             disabled={loading}
-            className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center py-3 text-lg font-semibold shadow-[0_0_20px_rgba(14,165,233,0.3)] hover:shadow-[0_0_30px_rgba(14,165,233,0.5)] transition-shadow"
           >
             {loading ? (
               <>
@@ -255,10 +255,8 @@ function WalletManager({ wallets, onWalletsChange, onAddWallet, onRemoveWallet, 
               </>
             ) : (
               <>
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                Buscar Portfólio ({wallets.length} {wallets.length === 1 ? 'wallet' : 'wallets'})
+                <RefreshCw className="w-5 h-5 mr-2" />
+                Sincronizar Portfólio ({wallets.length} {wallets.length === 1 ? 'carteira' : 'carteiras'})
               </>
             )}
           </button>
@@ -267,15 +265,15 @@ function WalletManager({ wallets, onWalletsChange, onAddWallet, onRemoveWallet, 
 
       {/* Empty State */}
       {wallets.length === 0 && (
-        <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-dark-600 rounded-xl">
-          <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-            Nenhuma wallet adicionada
+        <div className="text-center py-10 card-glass border-dashed border-white/10">
+          <div className="w-12 h-12 bg-dark-800 rounded-full flex items-center justify-center mx-auto mb-3 border border-white/5">
+            <SearchX className="w-6 h-6 text-gray-500" />
+          </div>
+          <h3 className="text-sm font-medium text-gray-200 mb-1">
+            Nenhuma carteira adicionada
           </h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Adicione uma ou mais wallets para visualizar seu portfólio combinado
+          <p className="text-xs text-gray-400 max-w-xs mx-auto">
+            Adicione uma ou mais carteiras acima para visualizar seu portfólio combinado.
           </p>
         </div>
       )}

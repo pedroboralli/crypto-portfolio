@@ -1,4 +1,5 @@
 import { formatCurrency } from '../utils/currency';
+import { RefreshCw, Wallet, TrendingUp, Layers } from 'lucide-react';
 
 function PortfolioDashboard({ data, onRefresh, loading, currency = 'BRL' }) {
   const getTotalValue = () => {
@@ -21,64 +22,66 @@ function PortfolioDashboard({ data, onRefresh, loading, currency = 'BRL' }) {
   };
 
   const totalChains = data.chains?.length || 0;
+  const isPositive = (data.portfolio24hChange || 0) >= 0;
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-8">
-          <div>
-            <p className="text-sm text-gray-500 mb-1">Total Portfolio Value</p>
-            <p className="text-3xl font-bold text-gray-900">
+    <div className="card-glass p-8 border-t-2 border-t-primary-500 overflow-hidden relative">
+      {/* Decorative gradient blob */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+      
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-8 md:gap-12 w-full">
+          {/* Total Value */}
+          <div className="flex-1">
+            <div className="flex items-center gap-2 text-gray-400 mb-2">
+              <Wallet className="w-4 h-4" />
+              <p className="text-sm font-medium uppercase tracking-wider">Saldo Total</p>
+            </div>
+            <p className="text-4xl md:text-5xl font-extrabold text-white tracking-tight">
               {formatCurrency(getTotalValue(), currency)}
             </p>
           </div>
 
-          <div className="border-l border-gray-200 pl-8">
-            <p className="text-sm text-gray-500 mb-1">24h Change</p>
-            <div className="flex items-center gap-2">
-              <p className={`text-2xl font-bold ${(data.portfolio24hChange || 0) >= 0
-                  ? 'text-green-600'
-                  : 'text-red-600'
-                }`}>
-                {(data.portfolio24hChange || 0) >= 0 ? '+' : ''}
+          {/* 24h Change */}
+          <div className="hidden md:block w-px h-16 bg-white/10"></div>
+          
+          <div className="flex-1">
+            <div className="flex items-center gap-2 text-gray-400 mb-2">
+              <TrendingUp className="w-4 h-4" />
+              <p className="text-sm font-medium uppercase tracking-wider">Desempenho 24h</p>
+            </div>
+            <div className="flex items-baseline gap-3">
+              <p className={`text-3xl font-bold ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                {isPositive ? '+' : ''}
                 {(data.portfolio24hChange || 0).toFixed(2)}%
               </p>
-              <p className={`text-sm font-medium ${(data.portfolio24hChange || 0) >= 0
-                  ? 'text-green-600'
-                  : 'text-red-600'
-                }`}>
-                ({(data.portfolio24hChange || 0) >= 0 ? '+' : ''}
-                {formatCurrency(get24hAbsoluteChange(), currency)})
+              <p className={`text-sm font-medium bg-dark-800/50 px-2 py-1 rounded-md border ${isPositive ? 'text-green-400 border-green-500/20' : 'text-red-400 border-red-500/20'}`}>
+                {isPositive ? '+' : ''}
+                {formatCurrency(get24hAbsoluteChange(), currency)}
               </p>
             </div>
           </div>
 
-          <div className="border-l border-gray-200 pl-8">
-            <p className="text-sm text-gray-500 mb-1">Chains</p>
-            <p className="text-2xl font-bold text-gray-900">{totalChains}</p>
+          {/* Chains Count */}
+          <div className="hidden md:block w-px h-16 bg-white/10"></div>
+          
+          <div className="flex-1 md:flex-none">
+            <div className="flex items-center gap-2 text-gray-400 mb-2">
+              <Layers className="w-4 h-4" />
+              <p className="text-sm font-medium uppercase tracking-wider">Redes Ativas</p>
+            </div>
+            <p className="text-3xl font-bold text-white">{totalChains}</p>
           </div>
         </div>
 
         <button
           onClick={onRefresh}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          title="Refresh prices"
+          className="btn-primary shrink-0 self-start md:self-center"
+          title="Atualizar preços"
         >
-          <svg
-            className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-            />
-          </svg>
-          {loading ? 'Updating...' : 'Refresh'}
+          <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+          {loading ? 'Sincronizando...' : 'Atualizar'}
         </button>
       </div>
     </div>

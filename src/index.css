@@ -62,17 +62,15 @@ button, a {
 
 @layer base {
   body {
-    @apply antialiased transition-colors duration-300;
-    @apply bg-gray-50 text-gray-900;
-  }
-
-  body.dark,
-  .dark body {
-    @apply bg-dark-900 text-gray-100;
+    @apply antialiased min-h-screen text-gray-100;
+    /* Force dark theme with mesh gradient */
+    @apply bg-dark-900 bg-gradient-mesh-dark bg-fixed;
+    /* Smooth transitions */
+    @apply transition-colors duration-500;
   }
 
   * {
-    @apply border-gray-200 dark:border-dark-600;
+    @apply border-dark-600/50;
   }
 }
 
@@ -80,82 +78,76 @@ button, a {
   /* Enhanced card with glassmorphism */
   .card {
     @apply relative rounded-2xl p-6 border transition-all duration-300;
-    @apply bg-white/70 backdrop-blur-xl shadow-lg border-white/20;
-    @apply dark:bg-dark-800/50 dark:backdrop-blur-xl dark:shadow-2xl;
-    @apply dark:border-dark-600/50 dark:shadow-primary-500/5;
+    @apply bg-dark-800/40 backdrop-blur-xl shadow-2xl;
+    @apply border-white/5 shadow-primary-500/5;
   }
 
   /* Glass card variant - more transparent */
   .card-glass {
     @apply card;
-    @apply bg-white/40 dark:bg-dark-800/30;
+    @apply bg-dark-800/20;
     @apply backdrop-blur-2xl;
   }
 
   /* Elevated glass card - higher z-index appearance */
   .card-elevated {
     @apply card;
-    @apply bg-white/80 dark:bg-dark-700/60;
-    @apply shadow-xl dark:shadow-primary-500/10;
+    @apply bg-dark-700/50;
+    @apply shadow-xl shadow-primary-500/10;
   }
 
   /* Glass overlay for headers/sections */
   .glass-header {
-    @apply backdrop-blur-md bg-white/80 dark:bg-dark-800/80;
-    @apply border-b border-gray-200/50 dark:border-dark-600/50;
-    @apply shadow-sm dark:shadow-primary-500/5;
+    @apply backdrop-blur-xl bg-dark-900/60;
+    @apply border-b border-white/5;
+    @apply shadow-lg shadow-black/20;
   }
 
   /* Button styles with glass effect */
   .btn {
-    @apply px-4 py-2 rounded-xl font-medium transition-all duration-200;
-    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
-    @apply backdrop-blur-sm;
+    @apply px-4 py-2 rounded-xl font-medium transition-all duration-300;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900;
+    @apply backdrop-blur-sm flex items-center justify-center gap-2;
   }
 
   .btn-primary {
     @apply btn relative overflow-hidden;
-    @apply bg-gradient-to-r from-primary-600 to-primary-500;
-    @apply text-white hover:from-primary-700 hover:to-primary-600;
+    @apply bg-gradient-to-r from-primary-600/90 to-primary-500/90;
+    @apply text-white hover:from-primary-500 hover:to-primary-400;
     @apply focus:ring-primary-500;
-    @apply shadow-lg shadow-primary-500/30;
-    @apply dark:shadow-primary-500/40 dark:hover:shadow-primary-500/50;
+    @apply shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50;
+    @apply border border-white/10;
   }
 
   .btn-secondary {
     @apply btn;
-    @apply bg-gray-100/80 dark:bg-dark-700/80;
-    @apply text-gray-800 dark:text-gray-200;
-    @apply hover:bg-gray-200/80 dark:hover:bg-dark-600/80;
-    @apply focus:ring-gray-500 dark:focus:ring-primary-500;
-    @apply backdrop-blur-md;
+    @apply bg-dark-700/60 text-gray-200;
+    @apply hover:bg-dark-600/80;
+    @apply focus:ring-primary-500;
+    @apply border border-white/5;
   }
 
   /* Glass badge with better contrast */
   .badge {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
-    @apply backdrop-blur-sm border;
+    @apply backdrop-blur-md border;
   }
 
   .badge-success {
-    @apply badge bg-green-100/80 text-green-800 border-green-200/50;
-    @apply dark:bg-green-900/30 dark:text-green-300 dark:border-green-800/50;
+    @apply badge bg-green-500/10 text-green-400 border-green-500/20;
   }
 
   .badge-error {
-    @apply badge bg-red-100/80 text-red-800 border-red-200/50;
-    @apply dark:bg-red-900/30 dark:text-red-300 dark:border-red-800/50;
+    @apply badge bg-red-500/10 text-red-400 border-red-500/20;
   }
 
   /* Input with glass effect */
   .input {
-    @apply w-full px-4 py-3 rounded-xl transition-all;
-    @apply bg-white/70 dark:bg-dark-800/50;
-    @apply border border-gray-300/50 dark:border-dark-600/50;
-    @apply backdrop-blur-md;
-    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
-    @apply text-gray-900 dark:text-gray-100;
-    @apply placeholder-gray-500 dark:placeholder-gray-400;
+    @apply w-full px-4 py-3 rounded-xl transition-all duration-300;
+    @apply bg-dark-800/50 backdrop-blur-md;
+    @apply border border-white/10;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:bg-dark-800/80;
+    @apply text-gray-100 placeholder-gray-500;
   }
 
   /* Loading skeleton */

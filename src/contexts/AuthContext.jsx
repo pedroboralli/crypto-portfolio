@@ -75,7 +75,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, needsOnboarding, login, logout, onboard }}>
+    <AuthContext.Provider value={{ user, session, token: session?.access_token, loading, needsOnboarding, login, logout, onboard }}>
       {children}
     </AuthContext.Provider>
   );

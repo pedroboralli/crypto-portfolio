@@ -1,6 +1,6 @@
-import { getAllEVMBalances, isValidEVMAddress } from '../../lib/services/evmService.js';
-import { getBitcoinBalance, isValidBitcoinAddress } from '../../lib/services/bitcoinService.js';
-import { getPrices } from '../../lib/services/priceService.js';
+import { getAllEVMBalances, isValidEVMAddress } from '../lib/services/evmService.js';
+import { getBitcoinBalance, isValidBitcoinAddress } from '../lib/services/bitcoinService.js';
+import { getPrices } from '../lib/services/priceService.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {

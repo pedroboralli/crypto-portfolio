@@ -130,95 +130,106 @@ function AssetList({ chains, currency = 'BRL', totalValue = 0 }) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="card-glass p-0 overflow-hidden border border-white/5">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-white/5">
+          <thead className="bg-dark-800/50 backdrop-blur-md">
             <tr>
               <th
                 scope="col"
-                className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
                 onClick={() => handleSort('chain')}
               >
-                Chain <SortIcon column="chain" />
+                Rede <SortIcon column="chain" />
               </th>
               <th
                 scope="col"
-                className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
                 onClick={() => handleSort('symbol')}
               >
-                Token <SortIcon column="symbol" />
+                Ativo <SortIcon column="symbol" />
               </th>
               <th
                 scope="col"
-                className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                className="px-6 py-4 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
                 onClick={() => handleSort('percentage')}
               >
-                Portfolio % <SortIcon column="percentage" />
+                % Portfólio <SortIcon column="percentage" />
               </th>
               <th
                 scope="col"
-                className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                className="px-6 py-4 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider"
               >
-                Price
+                Preço
               </th>
               <th
                 scope="col"
-                className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                className="px-6 py-4 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
                 onClick={() => handleSort('balance')}
               >
-                Amount <SortIcon column="balance" />
+                Quantidade <SortIcon column="balance" />
               </th>
               <th
                 scope="col"
-                className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                className="px-6 py-4 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
                 onClick={() => handleSort('value')}
               >
-                Value <SortIcon column="value" />
+                Valor Total <SortIcon column="value" />
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-white/5">
             {sortedAssets.map((asset, index) => (
-              <tr key={`${asset.chain}-${asset.symbol}-${index}`} className="hover:bg-gray-50">
-                <td className="px-4 py-3 whitespace-nowrap text-sm">
-                  <div className="flex items-center">
-                    <span className="mr-2">{getChainIcon(asset.chainId)}</span>
-                    <span className="text-gray-900">{asset.chain}</span>
+              <tr key={`${asset.chain}-${asset.symbol}-${index}`} className="hover:bg-white/5 transition-colors group">
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl filter drop-shadow-md">{getChainIcon(asset.chainId)}</span>
+                    <span className="text-gray-300 font-medium group-hover:text-white transition-colors">{asset.chain}</span>
                   </div>
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <div className="flex items-center">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center gap-3">
                     {getTokenIcon(asset) ? (
-                      <img
-                        className="h-8 w-8 rounded-full mr-3"
-                        src={getTokenIcon(asset)}
-                        alt={asset.symbol}
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                        }}
-                      />
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-white/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <img
+                          className="h-10 w-10 rounded-full relative z-10 shadow-lg bg-dark-800"
+                          src={getTokenIcon(asset)}
+                          alt={asset.symbol}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                      </div>
                     ) : (
-                      <div className="h-8 w-8 rounded-full mr-3 bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">
+                      <div className="h-10 w-10 rounded-full bg-dark-700 border border-white/10 flex items-center justify-center text-xs font-bold text-gray-400">
                         {asset.symbol?.substring(0, 2)}
                       </div>
                     )}
                     <div>
-                      <div className="text-sm font-medium text-gray-900">{asset.symbol}</div>
+                      <div className="text-sm font-bold text-gray-100 group-hover:text-primary-400 transition-colors">{asset.symbol}</div>
                       <div className="text-xs text-gray-500">{asset.name}</div>
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900">
-                  {asset.portfolioPercentage.toFixed(2)}%
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                  <div className="flex flex-col items-end">
+                    <span className="text-gray-200 font-medium">{asset.portfolioPercentage.toFixed(2)}%</span>
+                    <div className="w-16 h-1 bg-dark-800 rounded-full mt-1.5 overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-primary-600 to-primary-400 rounded-full" 
+                        style={{ width: `${Math.min(asset.portfolioPercentage, 100)}%` }}
+                      ></div>
+                    </div>
+                  </div>
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-300">
                   {formatCurrency(getAssetPrice(asset, currency), currency)}
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900 font-mono">
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-300 font-mono">
                   {formatNumber(asset.balance, asset.decimals)}
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-semibold text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-white">
                   {formatCurrency(getAssetValue(asset, currency), currency)}
                 </td>
               </tr>
@@ -228,8 +239,8 @@ function AssetList({ chains, currency = 'BRL', totalValue = 0 }) {
       </div>
 
       {sortedAssets.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-gray-500">Nenhum asset encontrado</p>
+        <div className="text-center py-16">
+          <p className="text-gray-500 font-medium">Nenhum ativo encontrado</p>
         </div>
       )}
     </div>

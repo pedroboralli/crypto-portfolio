@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Edit2, Trash2, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 
 function WalletCard({ wallet, onRemove, onEditLabel, isEditing, setEditing }) {
   const [tempLabel, setTempLabel] = useState(wallet.label);
@@ -26,7 +27,7 @@ function WalletCard({ wallet, onRemove, onEditLabel, isEditing, setEditing }) {
   };
 
   return (
-    <div className="bg-white/70 dark:bg-dark-800/50 rounded-xl p-4 border border-gray-200 dark:border-dark-600 backdrop-blur-sm transition-all hover:shadow-md">
+    <div className="bg-dark-800/60 rounded-xl p-4 border border-white/5 backdrop-blur-md transition-all hover:border-white/10 hover:shadow-lg group">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           {/* Label (editable) */}
@@ -37,23 +38,21 @@ function WalletCard({ wallet, onRemove, onEditLabel, isEditing, setEditing }) {
               onChange={(e) => setTempLabel(e.target.value)}
               onBlur={handleSaveLabel}
               onKeyDown={handleKeyDown}
-              className="input w-full mb-2 text-sm py-1.5"
+              className="input w-full mb-2 text-sm py-1.5 focus:ring-primary-500"
               autoFocus
-              placeholder="Nome da wallet"
+              placeholder="Nome da carteira"
             />
           ) : (
             <div className="flex items-center gap-2 mb-2">
-              <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
+              <h4 className="font-semibold text-gray-100 text-sm">
                 {wallet.label}
               </h4>
               <button
                 onClick={() => setEditing(true)}
-                className="text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                className="text-gray-500 hover:text-primary-400 transition-colors opacity-0 group-hover:opacity-100"
                 title="Editar nome"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                </svg>
+                <Edit2 className="w-3.5 h-3.5" />
               </button>
             </div>
           )}
@@ -67,37 +66,33 @@ function WalletCard({ wallet, onRemove, onEditLabel, isEditing, setEditing }) {
           </p>
 
           {/* Type badge */}
-          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${
             wallet.type === 'evm'
-              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-              : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+              ? 'bg-blue-900/20 text-blue-400 border-blue-500/20'
+              : 'bg-orange-900/20 text-orange-400 border-orange-500/20'
           }`}>
             {wallet.type === 'evm' ? 'EVM' : 'Bitcoin'}
           </span>
 
           {/* Status indicators */}
           {wallet.loading && (
-            <div className="flex items-center text-xs text-blue-600 dark:text-blue-400 mt-2">
-              <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-1"></div>
-              Carregando...
+            <div className="flex items-center text-xs text-blue-400 mt-2.5">
+              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              Sincronizando...
             </div>
           )}
 
           {wallet.error && (
-            <div className="flex items-start text-xs text-red-600 dark:text-red-400 mt-2">
-              <svg className="w-3 h-3 mr-1 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
+            <div className="flex items-start text-xs text-red-400 mt-2.5 bg-red-900/10 p-1.5 rounded-md border border-red-500/10">
+              <AlertCircle className="w-3.5 h-3.5 mr-1.5 mt-0.5 shrink-0" />
               <span>{wallet.error}</span>
             </div>
           )}
 
           {wallet.portfolioData && !wallet.loading && !wallet.error && (
-            <div className="flex items-center text-xs text-green-600 dark:text-green-400 mt-2">
-              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              Dados carregados
+            <div className="flex items-center text-xs text-green-400 mt-2.5">
+              <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+              Sincronizado
             </div>
           )}
         </div>
@@ -105,12 +100,10 @@ function WalletCard({ wallet, onRemove, onEditLabel, isEditing, setEditing }) {
         {/* Remove button */}
         <button
           onClick={onRemove}
-          className="flex-shrink-0 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
-          title="Remover wallet"
+          className="shrink-0 text-gray-500 hover:text-red-400 transition-colors p-1.5 rounded-lg hover:bg-red-500/10 opacity-0 group-hover:opacity-100"
+          title="Remover carteira"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
+          <Trash2 className="w-4 h-4" />
         </button>
       </div>
     </div>
