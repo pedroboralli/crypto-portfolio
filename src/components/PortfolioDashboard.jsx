@@ -1,7 +1,25 @@
 import { formatCurrency } from '../utils/currency';
-import { RefreshCw, Wallet, TrendingUp, Layers } from 'lucide-react';
+import { RefreshCw, Wallet, TrendingUp, Layers, Clock } from 'lucide-react';
 
-function PortfolioDashboard({ data, onRefresh, loading, currency = 'BRL' }) {
+/**
+ * "há 2 min", "há 3 h", "ontem"... para o carimbo do último saldo sincronizado.
+ */
+function formatRelativeTime(isoDate) {
+  const timestamp = new Date(isoDate).getTime();
+  if (!timestamp) return null;
+
+  const minutes = Math.round((Date.now() - timestamp) / 60000);
+  if (minutes < 1) return 'agora mesmo';
+  if (minutes < 60) return `há ${minutes} min`;
+
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `há ${hours} h`;
+
+  const days = Math.round(hours / 24);
+  return days === 1 ? 'ontem' : `há ${days} dias`;
+}
+
+function PortfolioDashboard({ data, onRefresh, loading, currency = 'BRL', lastUpdated = null }) {
   const getTotalValue = () => {
     switch (currency) {
       case 'BRL':
@@ -23,6 +41,7 @@ function PortfolioDashboard({ data, onRefresh, loading, currency = 'BRL' }) {
 
   const totalChains = data.chains?.length || 0;
   const isPositive = (data.portfolio24hChange || 0) >= 0;
+  const updatedLabel = lastUpdated ? formatRelativeTime(lastUpdated) : null;
 
   return (
     <div className="card-glass p-8 border-t-2 border-t-primary-500 overflow-hidden relative">
@@ -40,6 +59,12 @@ function PortfolioDashboard({ data, onRefresh, loading, currency = 'BRL' }) {
             <p className="text-4xl md:text-5xl font-extrabold text-white tracking-tight">
               {formatCurrency(getTotalValue(), currency)}
             </p>
+            {updatedLabel && (
+              <p className="mt-2 flex items-center gap-1.5 text-xs text-gray-500">
+                <Clock className="w-3.5 h-3.5" />
+                Atualizado {updatedLabel}
+              </p>
+            )}
           </div>
 
           {/* 24h Change */}

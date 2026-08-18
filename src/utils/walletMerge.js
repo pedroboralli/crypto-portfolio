@@ -68,6 +68,8 @@ export function mergeWalletPortfolios(wallets) {
         existingChain.totalValueBRL = (existingChain.totalValueBRL || 0) + (chain.totalValueBRL || 0);
         existingChain.totalValueUSD = (existingChain.totalValueUSD || 0) + (chain.totalValueUSD || 0);
         existingChain.totalValueBTC = (existingChain.totalValueBTC || 0) + (chain.totalValueBTC || 0);
+        // Basta uma carteira falhar nessa rede para o total dela ser parcial
+        existingChain.failed = Boolean(existingChain.failed || chain.failed);
       } else {
         // New chain - add to map
         chainMap.set(chain.chainId, {
@@ -131,6 +133,21 @@ export function mergeWalletPortfolios(wallets) {
     .filter(w => w.type === 'bitcoin')
     .map(w => w.address);
 
+  // Agrega o estado degradado reportado pela API de cada carteira
+  const failedChains = new Set();
+  let stalePrices = false;
+  let missingPrices = false;
+
+  validWallets.forEach(wallet => {
+    const degraded = wallet.portfolioData.degraded;
+    if (!degraded) return;
+    (degraded.failedChains || []).forEach(chain => failedChains.add(chain));
+    stalePrices = stalePrices || Boolean(degraded.stalePrices);
+    missingPrices = missingPrices || Boolean(degraded.missingPrices);
+  });
+
+  const failedWallets = wallets.length - validWallets.length;
+
   // Build final merged portfolio object
   return {
     addresses: {
@@ -144,7 +161,90 @@ export function mergeWalletPortfolios(wallets) {
     timestamp: new Date().toISOString(),
     cached: false,
     walletCount: validWallets.length,
-    portfolio24hChange
+    portfolio24hChange,
+    degraded: {
+      failedChains: Array.from(failedChains),
+      failedWallets,
+      stalePrices,
+      missingPrices,
+      isDegraded: failedChains.size > 0 || failedWallets > 0 || missingPrices
+    }
+  };
+}
+
+/**
+ * Reaproveita o portfólio anterior nas partes que a sincronização nova não
+ * conseguiu ler.
+ *
+ * Sem isso, uma rede fora do ar (ou a CoinGecko em rate limit) fazia o saldo
+ * total despencar para perto de zero a cada clique em "Atualizar". Só
+ * substituímos uma rede quando a API avisou que ela falhou — carteira que
+ * realmente esvaziou volta zerada, como deve.
+ *
+ * @param {Object|null} previous - Portfólio exibido/cacheado antes
+ * @param {Object|null} next - Portfólio recém-sincronizado
+ * @returns {Object|null} - Portfólio reconciliado
+ */
+export function reconcilePortfolios(previous, next) {
+  if (!next) return previous || null;
+  if (!previous || !Array.isArray(previous.chains) || previous.chains.length === 0) return next;
+
+  const previousChains = new Map(previous.chains.map(chain => [chain.chainId, chain]));
+  const staleChains = [];
+
+  // Redes que responderam com falha: volta o último valor conhecido
+  const chains = next.chains.map(chain => {
+    if (!chain.failed) return chain;
+
+    const fallback = previousChains.get(chain.chainId);
+    if (!fallback || !fallback.assets?.length) return chain;
+
+    staleChains.push(chain.chain);
+    return { ...fallback, failed: false, stale: true };
+  });
+
+  // Redes que sumiram da resposta (a chamada inteira falhou) também voltam
+  const nextChainIds = new Set(next.chains.map(chain => chain.chainId));
+  if (next.degraded?.failedChains?.length > 0) {
+    previous.chains.forEach(chain => {
+      if (nextChainIds.has(chain.chainId) || !chain.assets?.length) return;
+      staleChains.push(chain.chain);
+      chains.push({ ...chain, failed: false, stale: true });
+    });
+  }
+
+  if (staleChains.length === 0) return next;
+
+  const totals = chains.reduce(
+    (acc, chain) => {
+      chain.assets.forEach(asset => {
+        acc.brl += asset.valueBRL || 0;
+        acc.usd += asset.valueUSD || 0;
+        acc.btc += asset.valueBTC || 0;
+      });
+      return acc;
+    },
+    { brl: 0, usd: 0, btc: 0 }
+  );
+
+  chains.sort((a, b) => (b.totalValueBRL || 0) - (a.totalValueBRL || 0));
+
+  return {
+    ...next,
+    totalValueBRL: totals.brl,
+    totalValueUSD: totals.usd,
+    totalValueBTC: totals.btc,
+    chains: chains.map(chain => ({
+      ...chain,
+      assets: chain.assets.map(asset => ({
+        ...asset,
+        portfolioPercentage: totals.brl > 0 ? ((asset.valueBRL || 0) / totals.brl) * 100 : 0
+      }))
+    })),
+    degraded: {
+      ...next.degraded,
+      staleChains
+    }
   };
 }
 

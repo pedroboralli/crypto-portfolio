@@ -29,14 +29,35 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: { message: 'Invalid Bitcoin address format' } });
     }
 
-    // Busca saldos em paralelo
-    const results = await Promise.all([
+    // Busca saldos em paralelo. allSettled para que a falha de uma rede
+    // (RPC fora do ar, rate limit) nao derrube a resposta inteira: o cliente
+    // recebe o que deu certo mais a lista do que falhou.
+    const [evmResult, btcResult] = await Promise.allSettled([
       evmAddr ? getAllEVMBalances(evmAddr) : Promise.resolve([]),
       btcAddr ? getBitcoinBalance(btcAddr) : Promise.resolve(null),
     ]);
 
-    let allChains = [...results[0]];
-    if (results[1]) allChains.push(results[1]);
+    const failedChains = [];
+
+    let allChains = [];
+    if (evmResult.status === 'fulfilled') {
+      allChains = [...evmResult.value];
+    } else {
+      console.error('EVM balances failed:', evmResult.reason?.message);
+      failedChains.push('EVM');
+    }
+
+    if (btcResult.status === 'fulfilled') {
+      if (btcResult.value) allChains.push(btcResult.value);
+    } else {
+      console.error('Bitcoin balance failed:', btcResult.reason?.message);
+      failedChains.push('Bitcoin');
+    }
+
+    // Redes que responderam mas com saldo indisponivel
+    allChains.forEach((chain) => {
+      if (chain.failed) failedChains.push(chain.chain);
+    });
 
     // Coleta coingeckoIds únicos
     const coingeckoIds = new Set();
@@ -47,6 +68,12 @@ export default async function handler(req, res) {
     );
 
     const prices = await getPrices([...coingeckoIds]);
+
+    // Preco stale = veio do cache porque a CoinGecko falhou; error = nunca foi
+    // conhecido, entao o valor sai zerado e a resposta e considerada degradada.
+    const priceEntries = Object.values(prices);
+    const stalePrices = priceEntries.some((p) => p.stale);
+    const missingPrices = priceEntries.some((p) => p.error);
 
     let totalValueBRL = 0;
     let totalValueUSD = 0;
@@ -111,6 +138,13 @@ export default async function handler(req, res) {
       chains: allChains,
       timestamp: new Date().toISOString(),
       cached: false,
+      degraded: {
+        // O cliente usa isso para nao sobrescrever o cache bom com dado ruim
+        failedChains,
+        stalePrices,
+        missingPrices,
+        isDegraded: failedChains.length > 0 || missingPrices,
+      },
     });
   } catch (error) {
     console.error('Error in /api/portfolio:', error);

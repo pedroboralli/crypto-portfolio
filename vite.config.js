@@ -8,11 +8,11 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
-    // Em dev, o Vercel CLI (vercel dev) gerencia o proxy para /api
-    // Mas para vite standalone, mantemos o proxy abaixo
+    // O frontend roda aqui (5173) e o Express (server.js) atende /api na
+    // porta 3000. Rode os dois: `npm start` num terminal, `npm run dev` noutro.
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: `http://localhost:${process.env.API_PORT || 3000}`,
         changeOrigin: true,
       },
     },

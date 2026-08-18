@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserAddresses, addAddress as addAddressToDb, deleteAddress as deleteAddressFromDb, updateAddressLabel as updateAddressLabelInDb, getUserPreferences, updateUserPreferences } from '../services/userApi';
 import { getPortfolio, getPortfolioMultiAddress } from '../services/api';
-import { mergeWalletPortfolios } from '../utils/walletMerge';
+import { mergeWalletPortfolios, reconcilePortfolios } from '../utils/walletMerge';
+import { loadPortfolioCache, savePortfolioCache, clearPortfolioCache } from '../utils/portfolioCache';
 import { formatCurrency } from '../utils/currency';
 import WalletManager from '../components/WalletManager';
 import WalletWidget from '../components/WalletWidget';
@@ -10,17 +11,64 @@ import PortfolioDashboard from '../components/PortfolioDashboard';
 import AssetList from '../components/AssetList';
 import CurrencySelector from '../components/CurrencySelector';
 import CopyButton from '../components/CopyButton';
-import { Loader2, Globe, Minimize2, SearchX } from 'lucide-react';
+import { Loader2, Globe, Minimize2, SearchX, AlertTriangle } from 'lucide-react';
+
+/**
+ * Monta o aviso de sincronização parcial a partir do que a API reportou como
+ * indisponível. Retorna null quando a sincronização veio completa.
+ */
+function buildSyncWarning(portfolio, fetchedWallets) {
+  const failedWallets = fetchedWallets.filter(w => w.error);
+  const degraded = portfolio?.degraded || {};
+  const staleChains = [...new Set(degraded.staleChains || [])];
+  const failedChains = [...new Set(degraded.failedChains || [])];
+  const parts = [];
+
+  if (failedWallets.length > 0) {
+    parts.push(
+      failedWallets.length === 1
+        ? '1 carteira não respondeu'
+        : `${failedWallets.length} carteiras não responderam`
+    );
+  }
+
+  if (staleChains.length > 0) {
+    parts.push(`saldo de ${staleChains.join(', ')} é do último valor conhecido`);
+  } else if (failedChains.length > 0) {
+    parts.push(`${failedChains.join(', ')} não respondeu`);
+  }
+
+  if (degraded.missingPrices) {
+    parts.push('alguns preços estão indisponíveis');
+  } else if (degraded.stalePrices) {
+    parts.push('preços vindos do cache');
+  }
+
+  if (parts.length === 0) return null;
+  return `Sincronização parcial: ${parts.join('; ')}.`;
+}
 
 function Dashboard() {
   const { user, token, logout } = useAuth();
+  const userId = user?.id;
+
+  // Saldo da última sessão: aparece na hora, antes de a sincronização terminar
+  const cachedEntry = useRef(loadPortfolioCache(userId)).current;
+
   const [wallets, setWallets] = useState([]);
-  const [mergedPortfolio, setMergedPortfolio] = useState(null);
+  const [mergedPortfolio, setMergedPortfolio] = useState(cachedEntry?.portfolio || null);
+  const [lastUpdated, setLastUpdated] = useState(cachedEntry?.updatedAt || null);
+  const [syncWarning, setSyncWarning] = useState(null);
   const [loading, setLoading] = useState(false);
   const [currency, setCurrency] = useState('BRL');
   const [selectedChain, setSelectedChain] = useState(null);
   const [isWalletManagerExpanded, setIsWalletManagerExpanded] = useState(false);
   const hasAutoFetched = useRef(false);
+  // Descarta respostas de sincronizações antigas que chegam fora de ordem
+  const fetchIdRef = useRef(0);
+  const portfolioRef = useRef(mergedPortfolio);
+
+  portfolioRef.current = mergedPortfolio;
 
   // Load user's wallets and preferences from database on mount
   useEffect(() => {
@@ -51,6 +99,13 @@ function Dashboard() {
         error: null
       }));
       setWallets(walletsFromDb);
+
+      // Sem carteiras não existe saldo para exibir: o cache antigo seria mentira
+      if (walletsFromDb.length === 0) {
+        clearPortfolioCache(userId);
+        setMergedPortfolio(null);
+        setLastUpdated(null);
+      }
     } catch (error) {
       console.error('Failed to load addresses:', error);
     }
@@ -103,7 +158,15 @@ function Dashboard() {
   const handleRemoveWalletFromDb = async (id) => {
     try {
       await deleteAddressFromDb(token, id);
-      setWallets(prev => prev.filter(w => w.id !== id));
+      const remaining = wallets.filter(w => w.id !== id);
+      setWallets(remaining);
+
+      if (remaining.length === 0) {
+        clearPortfolioCache(userId);
+        setMergedPortfolio(null);
+        setLastUpdated(null);
+        setSyncWarning(null);
+      }
     } catch (error) {
       console.error('Failed to delete address:', error);
       throw error;
@@ -121,37 +184,67 @@ function Dashboard() {
   };
 
   const handleFetchAll = async () => {
-    setLoading(true);
+    const walletsToFetch = wallets;
+    if (walletsToFetch.length === 0) return;
 
-    const updatedWallets = wallets.map(w => ({ ...w, loading: true, error: null }));
-    setWallets(updatedWallets);
+    const fetchId = ++fetchIdRef.current;
+    setLoading(true);
+    setSyncWarning(null);
+
+    const idsToFetch = new Set(walletsToFetch.map(w => w.id));
+    setWallets(prev => prev.map(w => (idsToFetch.has(w.id) ? { ...w, loading: true, error: null } : w)));
 
     try {
-      const fetchPromises = wallets.map(async (wallet) => {
-        try {
-          const portfolioData = wallet.type === 'bitcoin'
-            ? await getPortfolioMultiAddress(null, wallet.address)
-            : await getPortfolio(wallet.address);
-          return { ...wallet, portfolioData, loading: false, error: null };
-        } catch (error) {
-          console.error(`Error fetching portfolio for ${wallet.address}:`, error);
-          return { ...wallet, loading: false, error: error.message };
-        }
-      });
+      const results = await Promise.all(
+        walletsToFetch.map(async (wallet) => {
+          try {
+            const portfolioData = wallet.type === 'bitcoin'
+              ? await getPortfolioMultiAddress(null, wallet.address)
+              : await getPortfolio(wallet.address);
+            return { ...wallet, portfolioData, loading: false, error: null };
+          } catch (error) {
+            console.error(`Error fetching portfolio for ${wallet.address}:`, error);
+            return { ...wallet, loading: false, error: error.message };
+          }
+        })
+      );
 
-      const results = await Promise.all(fetchPromises);
-      setWallets(results);
+      // Resposta atrasada: uma sincronização mais nova já assumiu
+      if (fetchId !== fetchIdRef.current) return;
+
+      // Preserva carteiras adicionadas ou removidas durante a busca
+      const resultById = new Map(results.map(w => [w.id, w]));
+      setWallets(prev => prev.map(w => resultById.get(w.id) || w));
 
       const merged = mergeWalletPortfolios(results);
-      setMergedPortfolio(merged);
 
-      if (merged) {
-        setIsWalletManagerExpanded(false);
+      if (!merged) {
+        // Nenhuma carteira respondeu: mantém o último saldo bom em vez de sumir
+        setSyncWarning(
+          portfolioRef.current
+            ? 'Não foi possível sincronizar agora. Exibindo o último saldo conhecido.'
+            : 'Não foi possível sincronizar as carteiras. Tente novamente.'
+        );
+        return;
       }
+
+      // Repõe, a partir do saldo anterior, apenas as redes que falharam agora
+      const reconciled = reconcilePortfolios(portfolioRef.current, merged);
+      setMergedPortfolio(reconciled);
+
+      const savedAt = savePortfolioCache(userId, reconciled);
+      setLastUpdated(savedAt);
+      setSyncWarning(buildSyncWarning(reconciled, results));
+      setIsWalletManagerExpanded(false);
     } catch (error) {
       console.error('Error in batch fetch:', error);
+      if (fetchId === fetchIdRef.current) {
+        setSyncWarning('Erro ao sincronizar. Exibindo o último saldo conhecido.');
+      }
     } finally {
-      setLoading(false);
+      if (fetchId === fetchIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -159,6 +252,7 @@ function Dashboard() {
     handleFetchAll();
   };
 
+  // Com saldo em cache a sincronização roda em segundo plano, sem tela de espera
   if (loading && !mergedPortfolio) {
     return (
       <div className="min-h-[80vh] flex flex-col justify-center items-center gap-6 fade-in">
@@ -243,6 +337,13 @@ function Dashboard() {
           </div>
         )}
 
+        {syncWarning && (
+          <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200 fade-in">
+            <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" />
+            <span>{syncWarning}</span>
+          </div>
+        )}
+
         {mergedPortfolio && (
           <div className="space-y-6 fade-in">
             {/* Portfolio Dashboard always shows global total */}
@@ -251,6 +352,7 @@ function Dashboard() {
               onRefresh={handleRefresh}
               loading={loading}
               currency={currency}
+              lastUpdated={lastUpdated}
             />
 
             <div>
@@ -308,9 +410,6 @@ function Dashboard() {
                   };
                   const nativeSymbol = nativeTokenSymbols[chain.chain] || nativeTokenSymbols[chain.name] || 'ETH';
 
-                  // Debug: log chain assets to see structure
-                  console.log(`Chain ${chain.chain}/${chain.name} assets:`, chain.assets.map(a => ({ symbol: a.symbol, isNative: a.isNative, balance: a.balance })));
-
                   const nativeToken = chain.assets.find(a =>
                     a.isNative === true ||
                     a.symbol === nativeSymbol ||
@@ -318,8 +417,6 @@ function Dashboard() {
                     (nativeSymbol === 'MATIC' && (a.symbol === 'MATIC' || a.symbol === 'POL' || a.name === 'Polygon')) ||
                     (nativeSymbol === 'BNB' && (a.symbol === 'BNB' || a.name === 'BNB'))
                   );
-
-                  console.log(`Native token for ${chain.chain}:`, nativeToken);
 
                   const nativeBalance = nativeToken ? parseFloat(nativeToken.balance) : 0;
                   const displaySymbol = nativeToken?.symbol || nativeSymbol;
