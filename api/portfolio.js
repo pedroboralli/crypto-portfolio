@@ -38,6 +38,7 @@ export default async function handler(req, res) {
     ]);
 
     const failedChains = [];
+    const partialChains = [];
 
     let allChains = [];
     if (evmResult.status === 'fulfilled') {
@@ -54,9 +55,11 @@ export default async function handler(req, res) {
       failedChains.push('Bitcoin');
     }
 
-    // Redes que responderam mas com saldo indisponivel
+    // failed = saldo nativo indisponivel (rede inteira suspeita);
+    // partial = a rede respondeu mas algum token nao pode ser lido
     allChains.forEach((chain) => {
       if (chain.failed) failedChains.push(chain.chain);
+      else if (chain.partial) partialChains.push(chain.chain);
     });
 
     // Coleta coingeckoIds únicos
@@ -141,9 +144,10 @@ export default async function handler(req, res) {
       degraded: {
         // O cliente usa isso para nao sobrescrever o cache bom com dado ruim
         failedChains,
+        partialChains,
         stalePrices,
         missingPrices,
-        isDegraded: failedChains.length > 0 || missingPrices,
+        isDegraded: failedChains.length > 0 || partialChains.length > 0 || missingPrices,
       },
     });
   } catch (error) {

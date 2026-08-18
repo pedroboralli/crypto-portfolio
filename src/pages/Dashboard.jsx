@@ -22,6 +22,7 @@ function buildSyncWarning(portfolio, fetchedWallets) {
   const degraded = portfolio?.degraded || {};
   const staleChains = [...new Set(degraded.staleChains || [])];
   const failedChains = [...new Set(degraded.failedChains || [])];
+  const partialChains = [...new Set(degraded.partialChains || [])];
   const parts = [];
 
   if (failedWallets.length > 0) {
@@ -36,6 +37,10 @@ function buildSyncWarning(portfolio, fetchedWallets) {
     parts.push(`saldo de ${staleChains.join(', ')} é do último valor conhecido`);
   } else if (failedChains.length > 0) {
     parts.push(`${failedChains.join(', ')} não respondeu`);
+  }
+
+  if (partialChains.length > 0) {
+    parts.push(`alguns tokens de ${partialChains.join(', ')} não puderam ser lidos`);
   }
 
   if (degraded.missingPrices) {

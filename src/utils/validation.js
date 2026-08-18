@@ -3,7 +3,21 @@
 const ethRegex = /^0x[a-fA-F0-9]{40}$/;
 const btcLegacyRegex = /^[1][a-km-zA-HJ-NP-Z1-9]{25,34}$/;
 const btcSegwitRegex = /^[3][a-km-zA-HJ-NP-Z1-9]{25,34}$/;
-const btcBech32Regex = /^(bc1)[a-z0-9]{39,59}$/;
+const btcBech32Regex = /^bc1[ac-hj-np-z02-9]{39,59}$/;
+
+/**
+ * Endereco bech32 em maiusculas e valido (BIP-173, usado em QR code), mas as
+ * APIs de saldo so aceitam minusculas. Precisa casar com a mesma normalizacao
+ * do backend em lib/services/bitcoinService.js.
+ */
+export function normalizeBitcoinAddress(address) {
+  const trimmed = String(address || '').trim();
+  if (/^(bc1|BC1)/.test(trimmed)) {
+    const isUniformCase = trimmed === trimmed.toLowerCase() || trimmed === trimmed.toUpperCase();
+    if (isUniformCase) return trimmed.toLowerCase();
+  }
+  return trimmed;
+}
 
 /**
  * Checks if an address is a valid EVM address
@@ -20,9 +34,10 @@ export function isEVMAddress(address) {
  * @returns {boolean} - True if valid Bitcoin address
  */
 export function isBitcoinAddress(address) {
-  return btcLegacyRegex.test(address) ||
-         btcSegwitRegex.test(address) ||
-         btcBech32Regex.test(address);
+  const normalized = normalizeBitcoinAddress(address);
+  return btcLegacyRegex.test(normalized) ||
+         btcSegwitRegex.test(normalized) ||
+         btcBech32Regex.test(normalized);
 }
 
 /**
