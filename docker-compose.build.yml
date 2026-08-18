@@ -1,0 +1,14 @@
+# Override para compilar a imagem na própria máquina, em vez de baixar do GHCR:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+#
+# Útil para testar uma alteração antes de dar push. O Watchtower ignora a
+# imagem local, então ela não é sobrescrita pelo deploy automático até você
+# voltar a subir com o docker-compose.yml sozinho.
+services:
+  crypto-portfolio:
+    build: .
+    image: crypto-portfolio:local
+    pull_policy: build
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"

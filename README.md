@@ -164,12 +164,15 @@ INFURA_API_KEY=your_infura_key
 #### 2. Build e execute os containers
 
 ```bash
-# Build e inicia os containers
-docker-compose up --build
+# Baixa a imagem publicada no GHCR e inicia os containers
+docker compose up -d
 
-# Ou em modo detached (background)
-docker-compose up -d --build
+# Ou, para compilar a imagem localmente em vez de baixar
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 ```
+
+> Em produção o deploy é automático: cada push na `main` publica a imagem no
+> GHCR e o Watchtower atualiza o container. Veja [DEPLOY-CASAOS.md](DEPLOY-CASAOS.md).
 
 #### 3. Acesse a aplicação
 

@@ -1,7 +1,9 @@
 services:
   crypto-portfolio:
-    build: .
-    image: crypto-portfolio:latest
+    # Imagem publicada pelo workflow .github/workflows/deploy.yml a cada push
+    # na main. Para compilar localmente, use o override docker-compose.build.yml.
+    image: ghcr.io/pedroboralli/crypto-portfolio:latest
+    pull_policy: always
     container_name: crypto-portfolio
     restart: unless-stopped
     ports:
@@ -15,9 +17,21 @@ services:
     # alternativa ao IP do Tailscale, se preferir não sair pela rede.
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    labels:
+      # Só containers com esta label são atualizados pelo Watchtower.
+      com.centurylinklabs.watchtower.enable: "true"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 10s
+
+  watchtower:
+    image: containrrr/watchtower:1.7.1
+    container_name: watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    # Verifica o GHCR a cada 60s e remove as imagens antigas depois de atualizar.
+    command: --label-enable --cleanup --interval 60
