@@ -1,4 +1,4 @@
-import { getGlobalTop100 } from '../../../lib/services/marketService.js';
+import { getGlobalTop100 } from '../../lib/services/marketService.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {

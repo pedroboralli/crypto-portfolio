@@ -1,0 +1,23 @@
+services:
+  crypto-portfolio:
+    build: .
+    image: crypto-portfolio:latest
+    container_name: crypto-portfolio
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+    # Permite usar POSTGRES_URL=http://host.docker.internal:5432 como
+    # alternativa ao IP do Tailscale, se preferir não sair pela rede.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
