@@ -16,7 +16,7 @@ function CryptoIcon({ symbol, name, imageUrl, size = 'large', className = '' }) 
   if (!iconUrl || imageError) {
     return (
       <div className={`${sizeClass} ${className} flex-shrink-0`}>
-        <DefaultCryptoIcon className={sizeClass} />
+        <DefaultCryptoIcon symbol={symbol} className={sizeClass} />
       </div>
     );
   }

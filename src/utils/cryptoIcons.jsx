@@ -61,23 +61,11 @@ export function getCryptoName(symbol) {
 /**
  * Fallback SVG icon component for unknown tokens
  */
-export function DefaultCryptoIcon({ className = "w-8 h-8" }) {
+export function DefaultCryptoIcon({ symbol, className = "w-8 h-8" }) {
+  const initial = symbol ? symbol.charAt(0).toUpperCase() : '?';
   return (
-    <svg className={className} viewBox="0 0 32 32" fill="none">
-      <circle cx="16" cy="16" r="16" fill="url(#gradient)" />
-      <path
-        d="M16 8v16M12 12l4-4 4 4M12 20l4 4 4-4"
-        stroke="white"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <defs>
-        <linearGradient id="gradient" x1="0" y1="0" x2="32" y2="32">
-          <stop offset="0%" stopColor="#3b82f6" />
-          <stop offset="100%" stopColor="#8b5cf6" />
-        </linearGradient>
-      </defs>
-    </svg>
+    <div className={`${className} bg-gradient-to-br from-primary-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-inner ring-1 ring-white/10`}>
+      {initial}
+    </div>
   );
 }
