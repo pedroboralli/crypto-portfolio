@@ -54,12 +54,12 @@ function Register() {
           <div className="rounded-md shadow-sm space-y-3">
             <div>
               <input
-                type="email"
+                type="text"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Email"
+                placeholder="Usuário"
               />
             </div>
             <div>

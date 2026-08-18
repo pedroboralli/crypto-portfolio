@@ -1,6 +1,6 @@
 import { requireAuth } from '../../lib/middleware.js';
 import { addressSchema } from '../../lib/validation.js';
-import supabase from '../../lib/db.js';
+import { query } from '../../lib/db.js';
 
 export default async function handler(req, res) {
   let decoded;
@@ -15,14 +15,13 @@ export default async function handler(req, res) {
   // GET /api/user/addresses
   if (req.method === 'GET') {
     try {
-      const { data, error } = await supabase
-        .from('addresses')
-        .select('id, label, address, type, created_at')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return res.json({ addresses: data });
+      const { rows } = await query(
+        `SELECT id, label, address, type, created_at FROM addresses
+         WHERE user_id = $1
+         ORDER BY created_at DESC`,
+        [userId]
+      );
+      return res.json({ addresses: rows });
     } catch (error) {
       console.error('Get addresses error:', error);
       return res.status(500).json({ error: 'Failed to get addresses' });
@@ -40,25 +39,23 @@ export default async function handler(req, res) {
       const { label, address, type } = req.body;
 
       // Verifica duplicidade (case-insensitive)
-      const { data: existing } = await supabase
-        .from('addresses')
-        .select('id')
-        .eq('user_id', userId)
-        .ilike('address', address)
-        .maybeSingle();
+      const { rows: existing } = await query(
+        'SELECT id FROM addresses WHERE user_id = $1 AND LOWER(address) = LOWER($2)',
+        [userId, address]
+      );
 
-      if (existing) {
+      if (existing[0]) {
         return res.status(400).json({ error: 'Address already added' });
       }
 
-      const { data, error } = await supabase
-        .from('addresses')
-        .insert({ user_id: userId, label, address, type })
-        .select()
-        .single();
+      const { rows } = await query(
+        `INSERT INTO addresses (user_id, label, address, type)
+         VALUES ($1, $2, $3, $4)
+         RETURNING *`,
+        [userId, label, address, type]
+      );
 
-      if (error) throw error;
-      return res.status(201).json({ address: data });
+      return res.status(201).json({ address: rows[0] });
     } catch (error) {
       console.error('Add address error:', error);
       return res.status(500).json({ error: 'Failed to add address' });

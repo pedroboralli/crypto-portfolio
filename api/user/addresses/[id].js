@@ -1,5 +1,5 @@
 import { requireAuth } from '../../../lib/middleware.js';
-import supabase from '../../../lib/db.js';
+import { query } from '../../../lib/db.js';
 
 export default async function handler(req, res) {
   let decoded;
@@ -15,16 +15,12 @@ export default async function handler(req, res) {
   // DELETE /api/user/addresses/[id]
   if (req.method === 'DELETE') {
     try {
-      const { data, error } = await supabase
-        .from('addresses')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', userId)
-        .select('id')
-        .maybeSingle();
+      const { rows } = await query(
+        'DELETE FROM addresses WHERE id = $1 AND user_id = $2 RETURNING id',
+        [id, userId]
+      );
 
-      if (error) throw error;
-      if (!data) return res.status(404).json({ error: 'Address not found' });
+      if (!rows[0]) return res.status(404).json({ error: 'Address not found' });
 
       return res.json({ message: 'Address deleted successfully' });
     } catch (error) {
@@ -41,18 +37,14 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Label is required' });
       }
 
-      const { data, error } = await supabase
-        .from('addresses')
-        .update({ label })
-        .eq('id', id)
-        .eq('user_id', userId)
-        .select()
-        .maybeSingle();
+      const { rows } = await query(
+        'UPDATE addresses SET label = $1 WHERE id = $2 AND user_id = $3 RETURNING *',
+        [label, id, userId]
+      );
 
-      if (error) throw error;
-      if (!data) return res.status(404).json({ error: 'Address not found' });
+      if (!rows[0]) return res.status(404).json({ error: 'Address not found' });
 
-      return res.json({ address: data });
+      return res.json({ address: rows[0] });
     } catch (error) {
       console.error('Update address error:', error);
       return res.status(500).json({ error: 'Failed to update address' });

@@ -7,14 +7,13 @@ function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, user, needsOnboarding, loading: authLoading } = useAuth();
+  const { login, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (authLoading) return;
     if (user) navigate('/dashboard', { replace: true });
-    else if (needsOnboarding) navigate('/onboarding', { replace: true });
-  }, [user, needsOnboarding, authLoading]);
+  }, [user, authLoading]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -47,12 +46,12 @@ function Login() {
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <input
-                type="email"
+                type="text"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="appearance-none rounded-t-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Email"
+                placeholder="Usuário"
               />
             </div>
             <div>

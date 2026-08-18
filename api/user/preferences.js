@@ -1,5 +1,5 @@
 import { requireAuth } from '../../lib/middleware.js';
-import supabase from '../../lib/db.js';
+import { query } from '../../lib/db.js';
 
 export default async function handler(req, res) {
   let decoded;
@@ -14,13 +14,12 @@ export default async function handler(req, res) {
   // GET /api/user/preferences
   if (req.method === 'GET') {
     try {
-      const { data } = await supabase
-        .from('user_preferences')
-        .select('default_currency')
-        .eq('user_id', userId)
-        .maybeSingle();
+      const { rows } = await query(
+        'SELECT default_currency FROM user_preferences WHERE user_id = $1',
+        [userId]
+      );
 
-      return res.json({ preferences: data || { default_currency: 'BRL' } });
+      return res.json({ preferences: rows[0] || { default_currency: 'BRL' } });
     } catch (error) {
       console.error('Get preferences error:', error);
       return res.status(500).json({ error: 'Failed to get preferences' });
@@ -36,17 +35,15 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Invalid currency' });
       }
 
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .upsert(
-          { user_id: userId, default_currency },
-          { onConflict: 'user_id' }
-        )
-        .select()
-        .single();
+      const { rows } = await query(
+        `INSERT INTO user_preferences (user_id, default_currency)
+         VALUES ($1, $2)
+         ON CONFLICT (user_id) DO UPDATE SET default_currency = EXCLUDED.default_currency
+         RETURNING *`,
+        [userId, default_currency]
+      );
 
-      if (error) throw error;
-      return res.json({ preferences: data });
+      return res.json({ preferences: rows[0] });
     } catch (error) {
       console.error('Update preferences error:', error);
       return res.status(500).json({ error: 'Failed to update preferences' });

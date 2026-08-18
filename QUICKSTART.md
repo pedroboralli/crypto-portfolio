@@ -1,10 +1,10 @@
-# Quick Start — Crypto Portfolio (Vercel + Supabase)
+# Quick Start — Crypto Portfolio (Vercel + PostgreSQL)
 
 ## Pré-requisitos
 
 - **Node.js** 18+
 - **Vercel CLI** (já instalado via `npm install -g vercel`)
-- **Conta Supabase** com o projeto criado
+- **PostgreSQL** acessível (instância própria ou gerenciada)
 
 ---
 
@@ -17,8 +17,10 @@ cp .env.example .env.local
 Edite `.env.local` com seus valores:
 
 ```env
-SUPABASE_URL=https://xxxxxxxxxxx.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
+POSTGRES_URL=postgres://seu-host:5432
+POSTGRES_USER=...
+POSTGRES_PASSWORD=...
+POSTGRES_DB=...
 JWT_SECRET=<gere com o comando abaixo>
 ```
 
@@ -29,12 +31,12 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 
 ---
 
-## 2. Banco de dados (Supabase)
+## 2. Banco de dados (PostgreSQL)
 
-No **SQL Editor** do seu projeto Supabase, execute em ordem:
+Conecte no seu banco (ex. `psql`) e execute em ordem:
 
 1. `supabase/migrations/001_initial_schema.sql`
-2. `supabase/migrations/002_rls_policies.sql`
+2. `supabase/migrations/002_rls_policies.sql` (opcional — RLS não é necessária fora do Supabase)
 
 ---
 

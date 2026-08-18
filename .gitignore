@@ -47,4 +47,5 @@ docker-compose.override.yml
 # Vercel
 .vercel/
 .vercel
-.env*.local
+.env.example
+.env
