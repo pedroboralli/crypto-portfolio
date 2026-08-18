@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { getCryptoIconUrl, DefaultCryptoIcon } from '../utils/cryptoIcons';
 
-function CryptoIcon({ symbol, name, size = 'large', className = '' }) {
+function CryptoIcon({ symbol, name, imageUrl, size = 'large', className = '' }) {
   const [imageError, setImageError] = useState(false);
-  const iconUrl = getCryptoIconUrl(symbol, size);
+  const iconUrl = imageUrl || getCryptoIconUrl(symbol, size);
 
   // Determine size classes
   const sizeClass = {

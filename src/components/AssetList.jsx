@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { formatCurrency, formatNumber, getAssetValue, getAssetPrice } from '../utils/currency';
+import ChainIcon from './ChainIcon';
+import CryptoIcon from './CryptoIcon';
 
 function AssetList({ chains, currency = 'BRL', totalValue = 0 }) {
   const [sortBy, setSortBy] = useState('value');
@@ -70,64 +72,7 @@ function AssetList({ chains, currency = 'BRL', totalValue = 0 }) {
     );
   };
 
-  const getChainIcon = (chainId) => {
-    const icons = {
-      ethereum: '🔷',
-      arbitrum: '🔵',
-      polygon: '🟣',
-      bitcoin: '🟠',
-      bnb: '🟡'
-    };
-    return icons[chainId] || '⚪';
-  };
 
-  // Get token icon URL from CoinGecko or fallback
-  const getTokenIcon = (asset) => {
-    // If asset has image property, use it directly
-    if (asset.image) return asset.image;
-
-    // Fallback to common token icons by symbol (CoinGecko direct URLs)
-    const commonIcons = {
-      'ETH': 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
-      'WETH': 'https://assets.coingecko.com/coins/images/2518/small/weth.png',
-      'MATIC': 'https://assets.coingecko.com/coins/images/4713/small/matic-token-icon.png',
-      'POL': 'https://assets.coingecko.com/coins/images/4713/small/matic-token-icon.png',
-      'BNB': 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
-      'USDT': 'https://assets.coingecko.com/coins/images/325/small/Tether.png',
-      'USDC': 'https://assets.coingecko.com/coins/images/6319/small/usdc.png',
-      'DAI': 'https://assets.coingecko.com/coins/images/9956/small/Badge_Dai.png',
-      'WBTC': 'https://assets.coingecko.com/coins/images/7598/small/wrapped_bitcoin_wbtc.png',
-      'ARB': 'https://assets.coingecko.com/coins/images/16547/small/photo_2023-03-29_21.47.00.jpeg',
-      'LINK': 'https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png',
-      'UNI': 'https://assets.coingecko.com/coins/images/12504/small/uni.jpg',
-      'AAVE': 'https://assets.coingecko.com/coins/images/12645/small/AAVE.png',
-      'CRV': 'https://assets.coingecko.com/coins/images/12124/small/Curve.png',
-      'MKR': 'https://assets.coingecko.com/coins/images/1364/small/Mark_Maker.png',
-      'SNX': 'https://assets.coingecko.com/coins/images/3406/small/SNX.png',
-      'COMP': 'https://assets.coingecko.com/coins/images/10775/small/COMP.png',
-      'SUSHI': 'https://assets.coingecko.com/coins/images/12271/small/512x512_Logo_no_chop.png',
-      'YFI': 'https://assets.coingecko.com/coins/images/11849/small/yearn-finance-yfi.png',
-      'BAL': 'https://assets.coingecko.com/coins/images/11683/small/Balancer.png',
-      'GRT': 'https://assets.coingecko.com/coins/images/13397/small/Graph_Token.png',
-      'LDO': 'https://assets.coingecko.com/coins/images/13573/small/Lido_DAO.png',
-      'RPL': 'https://assets.coingecko.com/coins/images/2090/small/rocket_pool_%28RPL%29.png',
-      'GMX': 'https://assets.coingecko.com/coins/images/18323/small/arbit.png',
-      'PEPE': 'https://assets.coingecko.com/coins/images/29850/small/pepe-token.jpeg',
-      'SHIB': 'https://assets.coingecko.com/coins/images/11939/small/shiba.png',
-    };
-
-    const symbolUpper = asset.symbol?.toUpperCase();
-    if (commonIcons[symbolUpper]) {
-      return commonIcons[symbolUpper];
-    }
-
-    // Use CryptoCompare API as final fallback (more reliable for unknown tokens)
-    if (symbolUpper) {
-      return `https://www.cryptocompare.com/media/37746251/${symbolUpper.toLowerCase()}.png`;
-    }
-
-    return null;
-  };
 
   return (
     <div className="card-glass p-0 overflow-hidden border border-white/5">
@@ -183,29 +128,19 @@ function AssetList({ chains, currency = 'BRL', totalValue = 0 }) {
               <tr key={`${asset.chain}-${asset.symbol}-${index}`} className="hover:bg-white/5 transition-colors group">
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <div className="flex items-center gap-2">
-                    <span className="text-xl filter drop-shadow-md">{getChainIcon(asset.chainId)}</span>
+                    <ChainIcon chainId={asset.chainId} className="w-5 h-5 text-gray-400 group-hover:text-primary-400 transition-colors" />
                     <span className="text-gray-300 font-medium group-hover:text-white transition-colors">{asset.chain}</span>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-3">
-                    {getTokenIcon(asset) ? (
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-white/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <img
-                          className="h-10 w-10 rounded-full relative z-10 shadow-lg bg-dark-800"
-                          src={getTokenIcon(asset)}
-                          alt={asset.symbol}
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      <div className="h-10 w-10 rounded-full bg-dark-700 border border-white/10 flex items-center justify-center text-xs font-bold text-gray-400">
-                        {asset.symbol?.substring(0, 2)}
-                      </div>
-                    )}
+                    <CryptoIcon 
+                      symbol={asset.symbol} 
+                      name={asset.name} 
+                      imageUrl={asset.image}
+                      size="large" 
+                      className="shadow-lg bg-dark-800" 
+                    />
                     <div>
                       <div className="text-sm font-bold text-gray-100 group-hover:text-primary-400 transition-colors">{asset.symbol}</div>
                       <div className="text-xs text-gray-500">{asset.name}</div>
