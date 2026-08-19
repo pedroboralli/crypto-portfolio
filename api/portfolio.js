@@ -39,6 +39,7 @@ export default async function handler(req, res) {
 
     const failedChains = [];
     const partialChains = [];
+    const incompleteTokenLists = [];
 
     let allChains = [];
     if (evmResult.status === 'fulfilled') {
@@ -60,10 +61,12 @@ export default async function handler(req, res) {
     allChains.forEach((chain) => {
       if (chain.failed) failedChains.push(chain.chain);
       else if (chain.partial) partialChains.push(chain.chain);
+      if (chain.discoveryUnavailable) incompleteTokenLists.push(chain.chain);
     });
 
-    // Coleta coingeckoIds únicos
-    const coingeckoIds = new Set();
+    // Coleta coingeckoIds únicos. O bitcoin entra sempre: e ele que da a
+    // ancora USD->BRL usada para converter os tokens que vem do indexador.
+    const coingeckoIds = new Set(['bitcoin']);
     allChains.forEach((chain) =>
       chain.assets.forEach((asset) => {
         if (asset.coingeckoId) coingeckoIds.add(asset.coingeckoId);
@@ -84,12 +87,16 @@ export default async function handler(req, res) {
 
     const btcPriceBRL = prices['bitcoin']?.brl || 0;
     const btcPriceUSD = prices['bitcoin']?.usd || 0;
+    // Token descoberto pelo indexador so tem cotacao em USD
+    const brlPerUsd = btcPriceUSD ? btcPriceBRL / btcPriceUSD : 0;
 
     allChains = allChains.map((chain) => {
       const assetsWithPrices = chain.assets.map((asset) => {
         const price = prices[asset.coingeckoId];
-        const priceBRL = price?.brl || 0;
-        const priceUSD = price?.usd || 0;
+        const hasCoingeckoPrice = Boolean(price && !price.error);
+
+        const priceUSD = hasCoingeckoPrice ? price.usd || 0 : asset.priceUSDSource || 0;
+        const priceBRL = hasCoingeckoPrice ? price.brl || 0 : priceUSD * brlPerUsd;
         const priceBTC = priceUSD && btcPriceUSD ? priceUSD / btcPriceUSD : 0;
 
         const valueBRL = parseFloat(asset.balance) * priceBRL;
@@ -109,6 +116,8 @@ export default async function handler(req, res) {
           valueUSD,
           valueBTC,
           priceChange24h: price?.brl_24h_change || 0,
+          // Marca de onde veio a cotacao, util para depurar valores estranhos
+          priceSource: hasCoingeckoPrice ? 'coingecko' : asset.priceUSDSource ? 'indexer' : 'none',
         };
       });
 
@@ -145,9 +154,14 @@ export default async function handler(req, res) {
         // O cliente usa isso para nao sobrescrever o cache bom com dado ruim
         failedChains,
         partialChains,
+        incompleteTokenLists,
         stalePrices,
         missingPrices,
-        isDegraded: failedChains.length > 0 || partialChains.length > 0 || missingPrices,
+        isDegraded:
+          failedChains.length > 0 ||
+          partialChains.length > 0 ||
+          incompleteTokenLists.length > 0 ||
+          missingPrices,
       },
     });
   } catch (error) {

@@ -23,6 +23,7 @@ function buildSyncWarning(portfolio, fetchedWallets) {
   const staleChains = [...new Set(degraded.staleChains || [])];
   const failedChains = [...new Set(degraded.failedChains || [])];
   const partialChains = [...new Set(degraded.partialChains || [])];
+  const incompleteTokenLists = [...new Set(degraded.incompleteTokenLists || [])];
   const parts = [];
 
   if (failedWallets.length > 0) {
@@ -41,6 +42,10 @@ function buildSyncWarning(portfolio, fetchedWallets) {
 
   if (partialChains.length > 0) {
     parts.push(`alguns tokens de ${partialChains.join(', ')} não puderam ser lidos`);
+  }
+
+  if (incompleteTokenLists.length > 0) {
+    parts.push(`a lista de tokens de ${incompleteTokenLists.join(', ')} pode estar incompleta`);
   }
 
   if (degraded.missingPrices) {
@@ -72,8 +77,15 @@ function Dashboard() {
   // Descarta respostas de sincronizações antigas que chegam fora de ordem
   const fetchIdRef = useRef(0);
   const portfolioRef = useRef(mergedPortfolio);
+  // Uma unica re-sincronizacao automatica quando a lista de tokens vem incompleta
+  const retryTimerRef = useRef(null);
+  const hasAutoRetriedRef = useRef(false);
+  const fetchAllRef = useRef(null);
 
   portfolioRef.current = mergedPortfolio;
+
+  // Cancela a re-sincronizacao pendente ao sair da tela
+  useEffect(() => () => clearTimeout(retryTimerRef.current), []);
 
   // Load user's wallets and preferences from database on mount
   useEffect(() => {
@@ -241,6 +253,18 @@ function Dashboard() {
       setLastUpdated(savedAt);
       setSyncWarning(buildSyncWarning(reconciled, results));
       setIsWalletManagerExpanded(false);
+
+      // O indexador de tokens costuma estourar o tempo na primeira consulta de
+      // um endereco, mas termina logo depois e deixa o resultado em cache.
+      // Uma segunda passada (so uma) traz a lista completa sem o usuario agir.
+      const tokenListIncomplete = reconciled.degraded?.incompleteTokenLists?.length > 0;
+      if (tokenListIncomplete && !hasAutoRetriedRef.current) {
+        hasAutoRetriedRef.current = true;
+        clearTimeout(retryTimerRef.current);
+        retryTimerRef.current = setTimeout(() => fetchAllRef.current?.(), 12000);
+      } else if (!tokenListIncomplete) {
+        hasAutoRetriedRef.current = false;
+      }
     } catch (error) {
       console.error('Error in batch fetch:', error);
       if (fetchId === fetchIdRef.current) {
@@ -253,7 +277,12 @@ function Dashboard() {
     }
   };
 
+  // setTimeout guarda a versao do render em que foi criado; o ref garante que a
+  // re-sincronizacao use a lista de carteiras mais recente.
+  fetchAllRef.current = handleFetchAll;
+
   const handleRefresh = () => {
+    hasAutoRetriedRef.current = false;
     handleFetchAll();
   };
 

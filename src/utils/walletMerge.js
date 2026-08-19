@@ -136,6 +136,7 @@ export function mergeWalletPortfolios(wallets) {
   // Agrega o estado degradado reportado pela API de cada carteira
   const failedChains = new Set();
   const partialChains = new Set();
+  const incompleteTokenLists = new Set();
   let stalePrices = false;
   let missingPrices = false;
 
@@ -144,6 +145,7 @@ export function mergeWalletPortfolios(wallets) {
     if (!degraded) return;
     (degraded.failedChains || []).forEach(chain => failedChains.add(chain));
     (degraded.partialChains || []).forEach(chain => partialChains.add(chain));
+    (degraded.incompleteTokenLists || []).forEach(chain => incompleteTokenLists.add(chain));
     stalePrices = stalePrices || Boolean(degraded.stalePrices);
     missingPrices = missingPrices || Boolean(degraded.missingPrices);
   });
@@ -167,11 +169,16 @@ export function mergeWalletPortfolios(wallets) {
     degraded: {
       failedChains: Array.from(failedChains),
       partialChains: Array.from(partialChains),
+      incompleteTokenLists: Array.from(incompleteTokenLists),
       failedWallets,
       stalePrices,
       missingPrices,
       isDegraded:
-        failedChains.size > 0 || partialChains.size > 0 || failedWallets > 0 || missingPrices
+        failedChains.size > 0 ||
+        partialChains.size > 0 ||
+        incompleteTokenLists.size > 0 ||
+        failedWallets > 0 ||
+        missingPrices
     }
   };
 }
