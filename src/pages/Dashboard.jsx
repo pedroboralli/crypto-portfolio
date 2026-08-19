@@ -11,7 +11,7 @@ import PortfolioDashboard from '../components/PortfolioDashboard';
 import AssetList from '../components/AssetList';
 import CurrencySelector from '../components/CurrencySelector';
 import CopyButton from '../components/CopyButton';
-import { Loader2, Globe, Minimize2, SearchX, AlertTriangle } from 'lucide-react';
+import { Loader2, Globe, Minimize2, SearchX, AlertTriangle, WifiOff, Wallet } from 'lucide-react';
 
 /**
  * Monta o aviso de sincronização parcial a partir do que a API reportou como
@@ -62,13 +62,17 @@ function Dashboard() {
   const { user, token, logout } = useAuth();
   const userId = user?.id;
 
-  // Saldo da última sessão: aparece na hora, antes de a sincronização terminar
-  const cachedEntry = useRef(loadPortfolioCache(userId)).current;
+  // Saldo da última sessão: aparece na hora, antes de a sincronização terminar.
+  // Inicializador preguiçoso: le o localStorage uma vez, nao a cada render.
+  const [cachedEntry] = useState(() => loadPortfolioCache(userId));
 
   const [wallets, setWallets] = useState([]);
   const [mergedPortfolio, setMergedPortfolio] = useState(cachedEntry?.portfolio || null);
   const [lastUpdated, setLastUpdated] = useState(cachedEntry?.updatedAt || null);
   const [syncWarning, setSyncWarning] = useState(null);
+  // Falha ao carregar a lista de carteiras do banco (antes ficava so no console
+  // e a tela aparecia vazia, sem explicacao nenhuma)
+  const [addressesError, setAddressesError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [currency, setCurrency] = useState('BRL');
   const [selectedChain, setSelectedChain] = useState(null);
@@ -81,11 +85,18 @@ function Dashboard() {
   const retryTimerRef = useRef(null);
   const hasAutoRetriedRef = useRef(false);
   const fetchAllRef = useRef(null);
+  const addressesRetryRef = useRef(null);
 
   portfolioRef.current = mergedPortfolio;
 
-  // Cancela a re-sincronizacao pendente ao sair da tela
-  useEffect(() => () => clearTimeout(retryTimerRef.current), []);
+  // Cancela as tentativas pendentes ao sair da tela
+  useEffect(
+    () => () => {
+      clearTimeout(retryTimerRef.current);
+      clearTimeout(addressesRetryRef.current);
+    },
+    []
+  );
 
   // Load user's wallets and preferences from database on mount
   useEffect(() => {
@@ -93,17 +104,19 @@ function Dashboard() {
       loadUserAddresses();
       loadUserPreferences();
     }
+    // Descarta a tentativa pendente da sessao anterior ao trocar de token
+    return () => clearTimeout(addressesRetryRef.current);
   }, [token]);
 
   // Auto-fetch portfolio after wallets are loaded
   useEffect(() => {
-    if (wallets.length > 0 && !hasAutoFetched.current && !loading) {
+    if (wallets.length > 0 && !hasAutoFetched.current) {
       hasAutoFetched.current = true;
       handleFetchAll();
     }
   }, [wallets.length]);
 
-  async function loadUserAddresses() {
+  async function loadUserAddresses(attempt = 0) {
     try {
       const addresses = await getUserAddresses(token);
       const walletsFromDb = addresses.map(addr => ({
@@ -116,8 +129,11 @@ function Dashboard() {
         error: null
       }));
       setWallets(walletsFromDb);
+      setAddressesError(null);
 
-      // Sem carteiras não existe saldo para exibir: o cache antigo seria mentira
+      // Sem carteiras não existe saldo para exibir: o cache antigo seria mentira.
+      // Só vale quando a lista realmente chegou — falha de rede cai no catch e
+      // preserva o que já estava na tela.
       if (walletsFromDb.length === 0) {
         clearPortfolioCache(userId);
         setMergedPortfolio(null);
@@ -125,6 +141,22 @@ function Dashboard() {
       }
     } catch (error) {
       console.error('Failed to load addresses:', error);
+
+      // Tenta sozinho algumas vezes antes de pedir ação do usuário
+      if (attempt < 3) {
+        clearTimeout(addressesRetryRef.current);
+        addressesRetryRef.current = setTimeout(
+          () => loadUserAddresses(attempt + 1),
+          2000 * 2 ** attempt
+        );
+        return;
+      }
+
+      setAddressesError(
+        error.response?.status === 503
+          ? 'O servidor está temporariamente indisponível. Suas carteiras não puderam ser carregadas.'
+          : 'Não foi possível carregar suas carteiras.'
+      );
     }
   }
 
@@ -371,6 +403,27 @@ function Dashboard() {
           </div>
         )}
 
+        {addressesError && (
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200 fade-in">
+            <div className="flex items-start gap-3 flex-1">
+              <WifiOff className="w-5 h-5 shrink-0 mt-0.5 text-red-400" />
+              <span>
+                {addressesError}
+                {mergedPortfolio && ' Exibindo o último saldo salvo.'}
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                setAddressesError(null);
+                loadUserAddresses();
+              }}
+              className="btn-secondary shrink-0 self-start sm:self-auto"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        )}
+
         {syncWarning && (
           <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200 fade-in">
             <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" />
@@ -496,6 +549,24 @@ function Dashboard() {
                 totalValue={currency === 'BRL' ? mergedPortfolio.totalValueBRL : currency === 'USD' ? mergedPortfolio.totalValueUSD : mergedPortfolio.totalValueBTC}
               />
             </div>
+          </div>
+        )}
+
+        {!mergedPortfolio && !loading && wallets.length === 0 && !addressesError && (
+          <div className="text-center py-16 card-glass max-w-2xl mx-auto mt-12 border-dashed border-white/10">
+            <div className="w-16 h-16 bg-dark-800/80 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/5 shadow-inner">
+              <Wallet className="w-8 h-8 text-gray-500" />
+            </div>
+            <h3 className="mt-2 text-lg font-medium text-white">Nenhuma carteira cadastrada</h3>
+            <p className="mt-2 text-sm text-gray-400 max-w-sm mx-auto">
+              Adicione um endereço EVM (0x...) ou Bitcoin para começar a acompanhar seu portfólio.
+            </p>
+            <button
+              onClick={() => setIsWalletManagerExpanded(true)}
+              className="mt-6 btn-primary mx-auto"
+            >
+              Adicionar Carteira
+            </button>
           </div>
         )}
 
