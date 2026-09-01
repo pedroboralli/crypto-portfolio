@@ -22,7 +22,7 @@ function Navbar() {
                                 <Wallet className="w-5 h-5 text-white" />
                             </div>
                             <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-100 to-gray-400">
-                                Crypto Portfolio
+                                Analista
                             </span>
                         </div>
                         <div className="hidden sm:flex sm:space-x-1 h-full pt-1">
@@ -31,7 +31,7 @@ function Navbar() {
                                 className={`inline-flex items-center px-4 pt-1 h-full text-sm font-medium transition-all ${isActive('/dashboard')}`}
                             >
                                 <Wallet className="w-4 h-4 mr-2" />
-                                Portfólio
+                                Listagem
                             </Link>
                             <Link
                                 to="/top100"
@@ -69,7 +69,7 @@ function Navbar() {
                     className={`flex-1 flex justify-center items-center gap-2 text-sm font-medium px-2 py-2.5 rounded-lg transition-all ${location.pathname === '/dashboard' ? 'text-primary-400 bg-primary-500/10' : 'text-gray-400 hover:bg-white/5'}`}
                 >
                     <Wallet className="w-4 h-4" />
-                    Portfólio
+                    Listagem
                 </Link>
                 <Link
                     to="/top100"
